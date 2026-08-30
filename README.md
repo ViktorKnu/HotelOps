@@ -7,7 +7,10 @@ renhold, vedlikehold og gjester.
 ## Status
 
 Prosjektet er i en tidlig fase. Grunnstrukturen for backend og frontend er på
-plass, men domenefunksjonalitet er ennå ikke implementert.
+plass, og den første domenemodellen for hotellrom er implementert.
+
+Et rom har separate statuser for belegg, rengjøring og drift. Det regnes bare
+som klart for innsjekking når det er ledig, rent og operativt.
 
 ## Teknologistack
 
@@ -44,6 +47,12 @@ dotnet run --project backend/HotelOps.Api
 ```
 
 API-ets enkle helsesjekk er tilgjengelig på `GET /api/helse`.
+
+Kjør backendtestene:
+
+```bash
+dotnet test
+```
 
 Start frontend i en annen terminal:
 
