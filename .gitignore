@@ -1,0 +1,22 @@
+# .NET
+**/bin/
+**/obj/
+*.user
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Utviklingsverktøy og operativsystem
+.vs/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Lokale innstillinger og logger
+*.local
+*.log
+.env
+.env.*
+!.env.example

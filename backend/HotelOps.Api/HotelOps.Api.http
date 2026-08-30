@@ -1,0 +1,6 @@
+@HotelOps.Api_HostAddress = http://localhost:5091
+
+GET {{HotelOps.Api_HostAddress}}/api/helse
+Accept: application/json
+
+###
