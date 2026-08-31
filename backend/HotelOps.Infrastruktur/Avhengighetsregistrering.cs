@@ -1,3 +1,4 @@
+using HotelOps.Applikasjon.Romadministrasjon;
 using HotelOps.Infrastruktur.Datalagring;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +24,8 @@ public static class Avhengighetsregistrering
 
             valg.UseNpgsql(tilkoblingsstreng);
         });
+
+        tjenester.AddScoped<IRomleser, Romleser>();
 
         return tjenester;
     }

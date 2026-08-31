@@ -4,3 +4,8 @@ GET {{HotelOps.Api_HostAddress}}/api/helse
 Accept: application/json
 
 ###
+
+GET {{HotelOps.Api_HostAddress}}/api/rom
+Accept: application/json
+
+###
