@@ -1,6 +1,9 @@
+using HotelOps.Infrastruktur;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.LeggTilInfrastruktur(builder.Configuration);
 
 var app = builder.Build();
 
