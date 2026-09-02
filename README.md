@@ -13,9 +13,10 @@ Et rom har separate statuser for belegg, rengjøring og drift. Det regnes bare
 som klart for innsjekking når det er ledig, rent og operativt.
 
 EF Core-oppsett og en første PostgreSQL-migrering for rom er på plass.
-`GET /api/rom` henter romoversikten fra databasen. Det finnes ennå ikke
-endepunkter for å registrere rom eller endre romstatus. Frontend viser den samme
-romoversikten med separate statuser og nøkkeltall.
+`GET /api/rom` henter romoversikten fra databasen, og `POST /api/rom` registrerer
+nye rom. Det finnes ennå ikke endepunkter for å endre romstatus. Frontend viser
+romoversikten med separate statuser og nøkkeltall, men har ikke skjema for å
+registrere rom.
 
 ## Teknologistack
 
@@ -151,9 +152,26 @@ som `application/problem+json`, med en norsk melding uten interne feildetaljer.
 Eksempelkall ligger i `backend/HotelOps.Api/HotelOps.Api.http`. OpenAPI-dokumentet
 er tilgjengelig på `/openapi/v1.json` i utviklingsmiljøet.
 
+## Registrere rom i API-et
+
+`POST /api/rom` registrerer ett rom med standardstatusene `Ledig`, `Ren` og
+`Operativ`. Forespørselen inneholder bare romnummer og etasje:
+
+```json
+{
+  "nummer": "101",
+  "etasje": 1
+}
+```
+
+Et vellykket kall gir `201 Created` og det opprettede rommet i samme format som
+romoversikten. Tomt romnummer gir `400 Bad Request`. Romnummeret trimmes, og et
+nummer som allerede finnes gir `409 Conflict`. Den unike databaseindeksen avgjør
+duplikatkonflikten og beskytter også mot samtidige registreringsforsøk.
+
 Autentisering og rollebasert tilgang er ikke implementert. Romoversikten er
-foreløpig ubeskyttet og prosjektet er kun ment for lokal utvikling, ikke for
-offentlig bruk med reelle hotelldata.
+foreløpig ubeskyttet, og registreringsendepunktet er også åpent. Prosjektet er
+kun ment for lokal utvikling, ikke for offentlig bruk med reelle hotelldata.
 
 ## Videre utvikling
 

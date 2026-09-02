@@ -36,4 +36,12 @@ public sealed class RomTester
         Assert.Equal("nummer", feil.ParamName);
         Assert.StartsWith("Romnummer må oppgis.", feil.Message);
     }
+
+    [Fact]
+    public void RomnummerFjernerOverflødigeMellomrom()
+    {
+        var rom = new Rom(" 101 ", 1);
+
+        Assert.Equal("101", rom.Nummer);
+    }
 }

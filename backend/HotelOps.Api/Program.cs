@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using HotelOps.Api.Endepunkter;
+using HotelOps.Applikasjon.Romadministrasjon;
 using HotelOps.Infrastruktur;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,7 @@ builder.Services.AddProblemDetails(valg =>
         }
     };
 });
+builder.Services.AddScoped<Romregistrering>();
 builder.Services.LeggTilInfrastruktur(builder.Configuration);
 
 var app = builder.Build();

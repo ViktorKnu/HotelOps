@@ -9,3 +9,13 @@ GET {{HotelOps.Api_HostAddress}}/api/rom
 Accept: application/json
 
 ###
+
+POST {{HotelOps.Api_HostAddress}}/api/rom
+Content-Type: application/json
+
+{
+  "nummer": "101",
+  "etasje": 1
+}
+
+###

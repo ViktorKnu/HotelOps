@@ -26,6 +26,7 @@ public static class Avhengighetsregistrering
         });
 
         tjenester.AddScoped<IRomleser, Romleser>();
+        tjenester.AddScoped<IRomskriver, Romskriver>();
 
         return tjenester;
     }

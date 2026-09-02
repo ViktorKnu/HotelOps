@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using HotelOps.Applikasjon.Romadministrasjon;
 using HotelOps.Domene.Romadministrasjon;
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HotelOps.ApiTester;
 
-public sealed class RomoversiktTester
+public sealed class RomendepunktTester
 {
     [Fact]
     public async Task TomRomoversiktGir200OgTomListe()
@@ -50,6 +51,79 @@ public sealed class RomoversiktTester
         Assert.True(rom[1].GetProperty("erKlartForInnsjekking").GetBoolean());
     }
 
+    [Fact]
+    public async Task GyldigRomGir201OgStandardstatuser()
+    {
+        var romskriver = new TestRomskriver();
+        await using var fabrikk = new RomApiFabrikk(
+            new TestRomleser([]),
+            romskriver: romskriver);
+        using var klient = fabrikk.CreateClient();
+
+        using var svar = await klient.PostAsJsonAsync("/api/rom", new
+        {
+            nummer = " 103 ",
+            etasje = 1
+        });
+
+        Assert.Equal(HttpStatusCode.Created, svar.StatusCode);
+        Assert.Equal("/api/rom", svar.Headers.Location?.ToString());
+        Assert.NotNull(romskriver.SistLagtTil);
+        Assert.Equal("103", romskriver.SistLagtTil.Nummer);
+        using var dokument = JsonDocument.Parse(await svar.Content.ReadAsStringAsync());
+        var rom = dokument.RootElement;
+        Assert.Equal(romskriver.SistLagtTil.Id, rom.GetProperty("id").GetGuid());
+        Assert.Equal("Ledig", rom.GetProperty("beleggsstatus").GetString());
+        Assert.Equal("Ren", rom.GetProperty("rengjøringsstatus").GetString());
+        Assert.Equal("Operativ", rom.GetProperty("driftsstatus").GetString());
+        Assert.True(rom.GetProperty("erKlartForInnsjekking").GetBoolean());
+    }
+
+    [Fact]
+    public async Task TomtRomnummerGir400UtenÅLagre()
+    {
+        var romskriver = new TestRomskriver();
+        await using var fabrikk = new RomApiFabrikk(
+            new TestRomleser([]),
+            romskriver: romskriver);
+        using var klient = fabrikk.CreateClient();
+
+        using var svar = await klient.PostAsJsonAsync("/api/rom", new
+        {
+            nummer = " ",
+            etasje = 1
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, svar.StatusCode);
+        Assert.Equal("application/problem+json", svar.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(0, romskriver.AntallKall);
+        using var dokument = JsonDocument.Parse(await svar.Content.ReadAsStringAsync());
+        var feil = dokument.RootElement.GetProperty("errors").GetProperty("nummer")[0];
+        Assert.Equal("Romnummer må oppgis.", feil.GetString());
+    }
+
+    [Fact]
+    public async Task EksisterendeRomnummerGir409()
+    {
+        var romskriver = new TestRomskriver(kanLagre: false);
+        await using var fabrikk = new RomApiFabrikk(
+            new TestRomleser([]),
+            romskriver: romskriver);
+        using var klient = fabrikk.CreateClient();
+
+        using var svar = await klient.PostAsJsonAsync("/api/rom", new
+        {
+            nummer = "101",
+            etasje = 1
+        });
+
+        Assert.Equal(HttpStatusCode.Conflict, svar.StatusCode);
+        Assert.Equal("application/problem+json", svar.Content.Headers.ContentType?.MediaType);
+        var innhold = await svar.Content.ReadAsStringAsync();
+        Assert.Contains("Romnummeret er allerede i bruk.", innhold);
+        Assert.Contains("Rom 101 er allerede registrert.", innhold);
+    }
+
     [Theory]
     [InlineData("Development")]
     [InlineData("Production")]
@@ -75,7 +149,10 @@ public sealed class RomoversiktTester
         Assert.DoesNotContain(nameof(InvalidOperationException), innhold);
     }
 
-    private sealed class RomApiFabrikk(IRomleser romleser, string miljø = "Development")
+    private sealed class RomApiFabrikk(
+        IRomleser romleser,
+        string miljø = "Development",
+        IRomskriver? romskriver = null)
         : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder bygger)
@@ -86,6 +163,12 @@ public sealed class RomoversiktTester
             {
                 tjenester.RemoveAll<IRomleser>();
                 tjenester.AddSingleton(romleser);
+
+                if (romskriver is not null)
+                {
+                    tjenester.RemoveAll<IRomskriver>();
+                    tjenester.AddSingleton(romskriver);
+                }
             });
         }
     }
@@ -100,5 +183,19 @@ public sealed class RomoversiktTester
     {
         public Task<IReadOnlyList<Rom>> HentAlleAsync(CancellationToken avbryt = default) =>
             throw new InvalidOperationException("intern-testdetalj");
+    }
+
+    private sealed class TestRomskriver(bool kanLagre = true) : IRomskriver
+    {
+        public Rom? SistLagtTil { get; private set; }
+
+        public int AntallKall { get; private set; }
+
+        public Task<bool> PrøvLeggTilAsync(Rom rom, CancellationToken avbryt = default)
+        {
+            AntallKall++;
+            SistLagtTil = rom;
+            return Task.FromResult(kanLagre);
+        }
     }
 }
