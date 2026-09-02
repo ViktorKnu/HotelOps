@@ -99,10 +99,116 @@ h1 {
 
 .oppdatering {
   flex: 0 0 auto;
-  padding-bottom: 0.35rem;
   color: var(--dempet);
   font-size: 0.85rem;
 }
+
+.sidehandlinger {
+  display: grid;
+  justify-items: end;
+  gap: 0.8rem;
+  flex: 0 0 auto;
+}
+
+.hovedknapp,
+.lagreknapp {
+  padding: 0.72rem 1rem;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  background: var(--grønn-700);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.hovedknapp:hover,
+.lagreknapp:hover:not(:disabled) {
+  background: var(--grønn-900);
+}
+
+.registreringspanel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(480px, 1.3fr);
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid #bcd3ca;
+  border-radius: 16px;
+  background: var(--grønn-100);
+}
+
+.registreringspanel h2 {
+  margin: 0;
+  color: var(--grønn-900);
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+}
+
+.registreringspanel__forklaring {
+  max-width: 310px;
+  margin: 0.6rem 0 0;
+  color: #4e665e;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.romskjema {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 110px auto;
+  align-items: end;
+  gap: 1rem;
+}
+
+.skjemafelt {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.skjemafelt label {
+  color: var(--grønn-900);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.skjemafelt input {
+  width: 100%;
+  height: 43px;
+  padding: 0 0.75rem;
+  border: 1px solid #a9beb6;
+  border-radius: 8px;
+  color: var(--tekst);
+  background: var(--flate);
+  font: inherit;
+}
+
+.skjemafelt input:focus {
+  border-color: var(--grønn-700);
+  outline: 3px solid rgba(33, 100, 81, 0.16);
+}
+
+.lagreknapp {
+  min-width: 126px;
+  height: 43px;
+}
+
+.lagreknapp:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.skjemamelding {
+  min-height: 1.2rem;
+  grid-column: 1 / -1;
+}
+
+.skjemamelding p {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.skjemamelding--feil { color: var(--kritisk); }
+.skjemamelding--suksess { color: var(--grønn-700); }
 
 .nøkkeltall {
   display: grid;
@@ -280,6 +386,7 @@ h1 {
 }
 
 @media (max-width: 900px) {
+  .registreringspanel { grid-template-columns: 1fr; }
   .nøkkeltall { grid-template-columns: repeat(2, 1fr); }
   .romrutenett { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -288,7 +395,10 @@ h1 {
   .toppfelt { padding-inline: 1rem; }
   main { width: min(100% - 2rem, 1180px); padding-top: 2.5rem; }
   .sidehode { display: block; }
-  .oppdatering { margin-top: 1.25rem; }
+  .sidehandlinger { justify-items: start; margin-top: 1.25rem; }
+  .registreringspanel { padding: 1.25rem; }
+  .romskjema { grid-template-columns: 1fr 100px; }
+  .lagreknapp { grid-column: 1 / -1; }
   .nøkkeltall, .romrutenett { grid-template-columns: 1fr; }
   .nøkkeltallkort { min-height: 70px; }
   .miljømerke { display: none; }

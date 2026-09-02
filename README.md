@@ -15,8 +15,8 @@ som klart for innsjekking når det er ledig, rent og operativt.
 EF Core-oppsett og en første PostgreSQL-migrering for rom er på plass.
 `GET /api/rom` henter romoversikten fra databasen, og `POST /api/rom` registrerer
 nye rom. Det finnes ennå ikke endepunkter for å endre romstatus. Frontend viser
-romoversikten med separate statuser og nøkkeltall, men har ikke skjema for å
-registrere rom.
+romoversikten med separate statuser og nøkkeltall, og har et enkelt skjema for
+å registrere rom.
 
 ## Teknologistack
 
@@ -79,6 +79,8 @@ npm run dev
 Vites utviklingsserver videresender kall til `/api` til API-et på
 `http://localhost:5091`. Begge applikasjonene må derfor kjøre samtidig for å
 vise romdata. Frontend håndterer også laste-, tom- og feiltilstand.
+Registreringsskjemaet viser validerings- og konfliktmeldinger fra API-et og
+oppdaterer oversikten etter et vellykket kall.
 
 ## Database
 

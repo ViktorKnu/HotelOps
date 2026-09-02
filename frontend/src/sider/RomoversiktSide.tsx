@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Romkort } from '../komponenter/Romkort'
+import { RegistrerRomskjema } from '../komponenter/RegistrerRomskjema'
 import { hentRom } from '../tjenester/romtjeneste'
 import type { Rom } from '../typer/rom'
 
@@ -8,6 +9,7 @@ export function RomoversiktSide() {
   const [laster, setLaster] = useState(true)
   const [feilmelding, setFeilmelding] = useState<string | null>(null)
   const [forsøk, setForsøk] = useState(0)
+  const [viserRegistrering, setViserRegistrering] = useState(false)
 
   useEffect(() => {
     const avbryter = new AbortController()
@@ -45,6 +47,16 @@ export function RomoversiktSide() {
     (hotellrom) => hotellrom.driftsstatus !== 'Operativ',
   ).length
 
+  function leggTilRom(nyttRom: Rom) {
+    setFeilmelding(null)
+    setLaster(false)
+    setRom((registrerteRom) =>
+      [...registrerteRom, nyttRom].sort((første, andre) =>
+        første.nummer.localeCompare(andre.nummer, 'nb'),
+      ),
+    )
+  }
+
   return (
     <div className="appskall">
       <header className="toppfelt">
@@ -65,10 +77,25 @@ export function RomoversiktSide() {
               følges opp.
             </p>
           </div>
-          <div className="oppdatering" aria-live="polite">
-            {laster ? 'Oppdaterer oversikten …' : `${rom.length} rom registrert`}
+          <div className="sidehandlinger">
+            <div className="oppdatering" aria-live="polite">
+              {laster ? 'Oppdaterer oversikten …' : `${rom.length} rom registrert`}
+            </div>
+            <button
+              className="hovedknapp"
+              type="button"
+              aria-expanded={viserRegistrering}
+              aria-controls="registrer-rom"
+              onClick={() => setViserRegistrering((vises) => !vises)}
+            >
+              {viserRegistrering ? 'Lukk skjema' : 'Registrer rom'}
+            </button>
           </div>
         </section>
+
+        {viserRegistrering && (
+          <RegistrerRomskjema onRomRegistrert={leggTilRom} />
+        )}
 
         {!laster && !feilmelding && rom.length > 0 && (
           <section className="nøkkeltall" aria-label="Nøkkeltall for rom">
