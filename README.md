@@ -12,6 +12,11 @@ plass, og den første domenemodellen for hotellrom er implementert.
 Et rom har separate statuser for belegg, rengjøring og drift. Det regnes bare
 som klart for innsjekking når det er ledig, rent og operativt.
 
+Domenemodellen håndhever rengjøringsflyten
+`Ren → Skitten → Under rengjøring → Ren`. Ugyldige hopp og gjentakelser blir
+avvist. Flyten er ennå ikke eksponert gjennom API-et, og rengjøringsoppgaver
+opprettes ikke ennå.
+
 EF Core-oppsett og en første PostgreSQL-migrering for rom er på plass.
 `GET /api/rom` henter romoversikten fra databasen, og `POST /api/rom` registrerer
 nye rom. Det finnes ennå ikke endepunkter for å endre romstatus. Frontend viser

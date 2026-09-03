@@ -42,4 +42,37 @@ public sealed class Rom
         Beleggsstatus == Beleggsstatus.Ledig &&
         Rengjøringsstatus == Rengjøringsstatus.Ren &&
         Driftsstatus == Driftsstatus.Operativ;
+
+    public void MarkerSomSkitten()
+    {
+        if (Rengjøringsstatus != Rengjøringsstatus.Ren)
+        {
+            throw new UgyldigRengjøringsovergangException(
+                "Bare et rent rom kan markeres som skittent.");
+        }
+
+        Rengjøringsstatus = Rengjøringsstatus.Skitten;
+    }
+
+    public void StartRengjøring()
+    {
+        if (Rengjøringsstatus != Rengjøringsstatus.Skitten)
+        {
+            throw new UgyldigRengjøringsovergangException(
+                "Rengjøring kan bare startes for et skittent rom.");
+        }
+
+        Rengjøringsstatus = Rengjøringsstatus.UnderRengjøring;
+    }
+
+    public void FullførRengjøring()
+    {
+        if (Rengjøringsstatus != Rengjøringsstatus.UnderRengjøring)
+        {
+            throw new UgyldigRengjøringsovergangException(
+                "Rengjøring kan bare fullføres når rommet er under rengjøring.");
+        }
+
+        Rengjøringsstatus = Rengjøringsstatus.Ren;
+    }
 }
