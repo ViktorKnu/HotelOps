@@ -332,6 +332,40 @@ h1 {
 .statusmerke--advarsel { color: var(--advarsel); background: var(--advarsel-bakgrunn); }
 .statusmerke--kritisk { color: var(--kritisk); background: var(--kritisk-bakgrunn); }
 
+.romkort__handling {
+  min-height: 74px;
+  margin-top: 1rem;
+}
+
+.romkort__handling button {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #a9beb6;
+  border-radius: 9px;
+  color: var(--grønn-900);
+  background: var(--grønn-100);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.romkort__handling button:hover:not(:disabled) {
+  border-color: var(--grønn-700);
+}
+
+.romkort__handling button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.romkort__handlingsfeil {
+  margin: 0.5rem 0 0;
+  color: var(--kritisk);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
 .beskjed {
   display: grid;
   min-height: 300px;

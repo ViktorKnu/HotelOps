@@ -5,6 +5,8 @@ export interface OpprettRomForespørsel {
   etasje: number
 }
 
+export type Rengjøringshandling = 'marker-skitten' | 'start' | 'fullfor'
+
 interface ProblemDetaljer {
   title?: string
   detail?: string
@@ -26,6 +28,15 @@ async function lesFeilmelding(svar: Response): Promise<string> {
     )
   } catch {
     return 'Rommet kunne ikke registreres.'
+  }
+}
+
+async function lesRengjøringsfeil(svar: Response): Promise<string> {
+  try {
+    const problem = (await svar.json()) as ProblemDetaljer
+    return problem.detail ?? problem.title ?? 'Rengjøringsstatusen kunne ikke endres.'
+  } catch {
+    return 'Rengjøringsstatusen kunne ikke endres.'
   }
 }
 
@@ -68,3 +79,31 @@ export async function opprettRom(forespørsel: OpprettRomForespørsel): Promise<
     )
   }
 }
+
+export async function endreRengjøringsstatus(
+  romId: string,
+  handling: Rengjøringshandling,
+): Promise<Rom> {
+  try {
+    const svar = await fetch(`/api/rom/${romId}/rengjoring/${handling}`, {
+      method: 'PATCH',
+      headers: { Accept: 'application/json' },
+    })
+
+    if (!svar.ok) {
+      throw new Romstatusfeil(await lesRengjøringsfeil(svar))
+    }
+
+    return (await svar.json()) as Rom
+  } catch (feil) {
+    if (feil instanceof Romstatusfeil) {
+      throw feil
+    }
+
+    throw new Romstatusfeil(
+      'Rengjøringsstatusen kunne ikke endres. Kontroller tilkoblingen og prøv igjen.',
+    )
+  }
+}
+
+class Romstatusfeil extends Error {}

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import type { Rengjøringshandling } from '../tjenester/romtjeneste'
 import type {
   Beleggsstatus,
   Driftsstatus,
@@ -31,6 +33,19 @@ const statusstil: Record<Romstatus, string> = {
 
 interface RomkortEgenskaper {
   rom: Rom
+  onEndreRengjøringsstatus: (
+    romId: string,
+    handling: Rengjøringshandling,
+  ) => Promise<void>
+}
+
+const nesteRengjøringshandling: Record<
+  Rengjøringsstatus,
+  { handling: Rengjøringshandling; tekst: string }
+> = {
+  Ren: { handling: 'marker-skitten', tekst: 'Marker som skittent' },
+  Skitten: { handling: 'start', tekst: 'Start rengjøring' },
+  UnderRengjøring: { handling: 'fullfor', tekst: 'Fullfør rengjøring' },
 }
 
 function Statusmerke({ navn, status }: { navn: string; status: Romstatus }) {
@@ -44,7 +59,28 @@ function Statusmerke({ navn, status }: { navn: string; status: Romstatus }) {
   )
 }
 
-export function Romkort({ rom }: RomkortEgenskaper) {
+export function Romkort({ rom, onEndreRengjøringsstatus }: RomkortEgenskaper) {
+  const [utførerHandling, setUtførerHandling] = useState(false)
+  const [feilmelding, setFeilmelding] = useState<string | null>(null)
+  const nesteHandling = nesteRengjøringshandling[rom.rengjøringsstatus]
+
+  async function utførRengjøringshandling() {
+    setUtførerHandling(true)
+    setFeilmelding(null)
+
+    try {
+      await onEndreRengjøringsstatus(rom.id, nesteHandling.handling)
+    } catch (feil) {
+      setFeilmelding(
+        feil instanceof Error
+          ? feil.message
+          : 'Rengjøringsstatusen kunne ikke endres.',
+      )
+    } finally {
+      setUtførerHandling(false)
+    }
+  }
+
   return (
     <article className="romkort">
       <div className="romkort__topp">
@@ -66,6 +102,19 @@ export function Romkort({ rom }: RomkortEgenskaper) {
         <Statusmerke navn="Renhold" status={rom.rengjøringsstatus} />
         <Statusmerke navn="Drift" status={rom.driftsstatus} />
       </dl>
+
+      <div className="romkort__handling">
+        <button
+          type="button"
+          disabled={utførerHandling}
+          onClick={() => void utførRengjøringshandling()}
+        >
+          {utførerHandling ? 'Oppdaterer …' : nesteHandling.tekst}
+        </button>
+        <p className="romkort__handlingsfeil" role="alert">
+          {feilmelding}
+        </p>
+      </div>
     </article>
   )
 }

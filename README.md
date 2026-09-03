@@ -19,8 +19,8 @@ avvist. Flyten kan styres gjennom API-et. Rengjøringsoppgaver opprettes ikke en
 EF Core-oppsett og en første PostgreSQL-migrering for rom er på plass.
 `GET /api/rom` henter romoversikten fra databasen, og `POST /api/rom` registrerer
 nye rom. Egne endepunkter utfører overgangene i rengjøringsflyten. Frontend viser
-romoversikten med separate statuser og nøkkeltall, og har et enkelt skjema for å
-registrere rom.
+romoversikten med separate statuser og nøkkeltall, har et enkelt skjema for å
+registrere rom og viser neste gyldige rengjøringshandling på hvert romkort.
 
 ## Teknologistack
 

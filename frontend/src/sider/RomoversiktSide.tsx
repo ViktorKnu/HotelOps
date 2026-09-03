@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Romkort } from '../komponenter/Romkort'
 import { RegistrerRomskjema } from '../komponenter/RegistrerRomskjema'
-import { hentRom } from '../tjenester/romtjeneste'
+import {
+  endreRengjøringsstatus,
+  hentRom,
+  type Rengjøringshandling,
+} from '../tjenester/romtjeneste'
 import type { Rom } from '../typer/rom'
 
 export function RomoversiktSide() {
@@ -53,6 +57,18 @@ export function RomoversiktSide() {
     setRom((registrerteRom) =>
       [...registrerteRom, nyttRom].sort((første, andre) =>
         første.nummer.localeCompare(andre.nummer, 'nb'),
+      ),
+    )
+  }
+
+  async function oppdaterRengjøringsstatus(
+    romId: string,
+    handling: Rengjøringshandling,
+  ) {
+    const oppdatertRom = await endreRengjøringsstatus(romId, handling)
+    setRom((registrerteRom) =>
+      registrerteRom.map((hotellrom) =>
+        hotellrom.id === oppdatertRom.id ? oppdatertRom : hotellrom,
       ),
     )
   }
@@ -148,7 +164,11 @@ export function RomoversiktSide() {
         {!laster && !feilmelding && rom.length > 0 && (
           <section className="romrutenett" aria-label="Romoversikt">
             {rom.map((hotellrom) => (
-              <Romkort key={hotellrom.id} rom={hotellrom} />
+              <Romkort
+                key={hotellrom.id}
+                rom={hotellrom}
+                onEndreRengjøringsstatus={oppdaterRengjøringsstatus}
+              />
             ))}
           </section>
         )}
