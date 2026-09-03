@@ -1,4 +1,5 @@
 using HotelOps.Applikasjon.Romadministrasjon;
+using HotelOps.Domene.Romadministrasjon;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace HotelOps.Api.Endepunkter;
@@ -57,6 +58,69 @@ public static class Romendepunkter
         .ProducesProblem(StatusCodes.Status409Conflict)
         .ProducesProblem(StatusCodes.Status500InternalServerError);
 
+        ruter.MapPatch(
+            "/api/rom/{romId:guid}/rengjoring/marker-skitten",
+            async (Guid romId, Romrengjøring romrengjøring, CancellationToken avbryt) =>
+                await UtførRengjøringsendringAsync(
+                    romId,
+                    () => romrengjøring.MarkerSomSkittenAsync(romId, avbryt)))
+            .WithName("MarkerRomSomSkittent")
+            .WithTags("Rom")
+            .Produces<RomDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        ruter.MapPatch(
+            "/api/rom/{romId:guid}/rengjoring/start",
+            async (Guid romId, Romrengjøring romrengjøring, CancellationToken avbryt) =>
+                await UtførRengjøringsendringAsync(
+                    romId,
+                    () => romrengjøring.StartAsync(romId, avbryt)))
+            .WithName("StartRengjøringAvRom")
+            .WithTags("Rom")
+            .Produces<RomDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        ruter.MapPatch(
+            "/api/rom/{romId:guid}/rengjoring/fullfor",
+            async (Guid romId, Romrengjøring romrengjøring, CancellationToken avbryt) =>
+                await UtførRengjøringsendringAsync(
+                    romId,
+                    () => romrengjøring.FullførAsync(romId, avbryt)))
+            .WithName("FullførRengjøringAvRom")
+            .WithTags("Rom")
+            .Produces<RomDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
         return ruter;
+    }
+
+    private static async Task<IResult> UtførRengjøringsendringAsync(
+        Guid romId,
+        Func<Task<RomDto?>> handling)
+    {
+        try
+        {
+            var rom = await handling();
+
+            return rom is null
+                ? Results.Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Rommet finnes ikke.",
+                    detail: $"Fant ikke rom med ID {romId}.")
+                : Results.Ok(rom);
+        }
+        catch (UgyldigRengjøringsovergangException feil)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Rengjøringsstatusen kan ikke endres.",
+                detail: feil.Message);
+        }
     }
 }

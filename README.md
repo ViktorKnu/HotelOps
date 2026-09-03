@@ -14,14 +14,13 @@ som klart for innsjekking når det er ledig, rent og operativt.
 
 Domenemodellen håndhever rengjøringsflyten
 `Ren → Skitten → Under rengjøring → Ren`. Ugyldige hopp og gjentakelser blir
-avvist. Flyten er ennå ikke eksponert gjennom API-et, og rengjøringsoppgaver
-opprettes ikke ennå.
+avvist. Flyten kan styres gjennom API-et. Rengjøringsoppgaver opprettes ikke ennå.
 
 EF Core-oppsett og en første PostgreSQL-migrering for rom er på plass.
 `GET /api/rom` henter romoversikten fra databasen, og `POST /api/rom` registrerer
-nye rom. Det finnes ennå ikke endepunkter for å endre romstatus. Frontend viser
-romoversikten med separate statuser og nøkkeltall, og har et enkelt skjema for
-å registrere rom.
+nye rom. Egne endepunkter utfører overgangene i rengjøringsflyten. Frontend viser
+romoversikten med separate statuser og nøkkeltall, og har et enkelt skjema for å
+registrere rom.
 
 ## Teknologistack
 
@@ -176,9 +175,24 @@ romoversikten. Tomt romnummer gir `400 Bad Request`. Romnummeret trimmes, og et
 nummer som allerede finnes gir `409 Conflict`. Den unike databaseindeksen avgjør
 duplikatkonflikten og beskytter også mot samtidige registreringsforsøk.
 
+## Endre rengjøringsstatus i API-et
+
+Rengjøringsflyten styres med tre handlinger:
+
+```text
+PATCH /api/rom/{romId}/rengjoring/marker-skitten
+PATCH /api/rom/{romId}/rengjoring/start
+PATCH /api/rom/{romId}/rengjoring/fullfor
+```
+
+Et vellykket kall gir `200 OK` med oppdatert rom. Ukjent rom gir `404 Not Found`,
+mens en overgang som bryter statusrekkefølgen gir `409 Conflict`. Endringen
+lagres først etter at domenemodellen har godkjent overgangen.
+
 Autentisering og rollebasert tilgang er ikke implementert. Romoversikten er
-foreløpig ubeskyttet, og registreringsendepunktet er også åpent. Prosjektet er
-kun ment for lokal utvikling, ikke for offentlig bruk med reelle hotelldata.
+foreløpig ubeskyttet, og endepunktene for registrering og rengjøring er også
+åpne. Prosjektet er kun ment for lokal utvikling, ikke for offentlig bruk med
+reelle hotelldata.
 
 ## Videre utvikling
 

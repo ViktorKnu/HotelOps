@@ -7,6 +7,9 @@ namespace HotelOps.Infrastruktur.Datalagring;
 
 internal sealed class Romskriver(HotellDbContext database) : IRomskriver
 {
+    public async Task<Rom?> HentAsync(Guid romId, CancellationToken avbryt = default) =>
+        await database.Rom.FindAsync([romId], avbryt);
+
     public async Task<bool> PrøvLeggTilAsync(Rom rom, CancellationToken avbryt = default)
     {
         database.Rom.Add(rom);
@@ -27,4 +30,7 @@ internal sealed class Romskriver(HotellDbContext database) : IRomskriver
             return false;
         }
     }
+
+    public async Task LagreEndringerAsync(CancellationToken avbryt = default) =>
+        await database.SaveChangesAsync(avbryt);
 }

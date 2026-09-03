@@ -1,4 +1,5 @@
 @HotelOps.Api_HostAddress = http://localhost:5091
+@RomId = 00000000-0000-0000-0000-000000000000
 
 GET {{HotelOps.Api_HostAddress}}/api/helse
 Accept: application/json
@@ -17,5 +18,17 @@ Content-Type: application/json
   "nummer": "101",
   "etasje": 1
 }
+
+###
+
+PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/marker-skitten
+
+###
+
+PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/start
+
+###
+
+PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/fullfor
 
 ###

@@ -20,6 +20,7 @@ builder.Services.AddProblemDetails(valg =>
     };
 });
 builder.Services.AddScoped<Romregistrering>();
+builder.Services.AddScoped<Romrengjøring>();
 builder.Services.LeggTilInfrastruktur(builder.Configuration);
 
 var app = builder.Build();
