@@ -14,6 +14,9 @@ export function RomoversiktSide() {
   const [feilmelding, setFeilmelding] = useState<string | null>(null)
   const [forsøk, setForsøk] = useState(0)
   const [viserRegistrering, setViserRegistrering] = useState(false)
+  const [søk, setSøk] = useState('')
+  const [etasje, setEtasje] = useState('alle')
+  const [statusfilter, setStatusfilter] = useState('alle')
 
   useEffect(() => {
     const avbryter = new AbortController()
@@ -50,6 +53,27 @@ export function RomoversiktSide() {
   const driftsavvik = rom.filter(
     (hotellrom) => hotellrom.driftsstatus !== 'Operativ',
   ).length
+
+  const etasjer = [...new Set(rom.map((hotellrom) => hotellrom.etasje))].sort(
+    (a, b) => a - b,
+  )
+  const synligeRom = rom.filter((hotellrom) => {
+    const matcherSøk = hotellrom.nummer.toLocaleLowerCase('nb').includes(
+      søk.trim().toLocaleLowerCase('nb'),
+    )
+    const matcherEtasje = etasje === 'alle' || String(hotellrom.etasje) === etasje
+    const matcherStatus = statusfilter === 'alle'
+      || (statusfilter === 'klare' && hotellrom.erKlartForInnsjekking)
+      || (statusfilter === 'renhold' && hotellrom.rengjøringsstatus !== 'Ren')
+      || (statusfilter === 'drift' && hotellrom.driftsstatus !== 'Operativ')
+    return matcherSøk && matcherEtasje && matcherStatus
+  })
+
+  function nullstillFiltre() {
+    setSøk('')
+    setEtasje('alle')
+    setStatusfilter('alle')
+  }
 
   function leggTilRom(nyttRom: Rom) {
     setFeilmelding(null)
@@ -162,8 +186,53 @@ export function RomoversiktSide() {
         )}
 
         {!laster && !feilmelding && rom.length > 0 && (
+          <section className="romfiltre" aria-label="Søk og filtrer rom">
+            <div className="skjemafelt">
+              <label htmlFor="romsøk">Søk etter romnummer</label>
+              <input id="romsøk" type="search" placeholder="For eksempel 101"
+                value={søk} onChange={(hendelse) => setSøk(hendelse.target.value)} />
+            </div>
+            <div className="skjemafelt">
+              <label htmlFor="etasjefilter">Etasje</label>
+              <select id="etasjefilter" value={etasje}
+                onChange={(hendelse) => setEtasje(hendelse.target.value)}>
+                <option value="alle">Alle etasjer</option>
+                {etasjer.map((nummer) => (
+                  <option key={nummer} value={nummer}>Etasje {nummer}</option>
+                ))}
+              </select>
+            </div>
+            <div className="skjemafelt">
+              <label htmlFor="statusfilter">Vis rom</label>
+              <select id="statusfilter" value={statusfilter}
+                onChange={(hendelse) => setStatusfilter(hendelse.target.value)}>
+                <option value="alle">Alle statuser</option>
+                <option value="klare">Klare for innsjekking</option>
+                <option value="renhold">Krever renhold</option>
+                <option value="drift">Driftsavvik</option>
+              </select>
+            </div>
+            <button className="nullstillknapp" type="button" onClick={nullstillFiltre}
+              disabled={!søk && etasje === 'alle' && statusfilter === 'alle'}>
+              Nullstill filtre
+            </button>
+            <p className="filterresultat" role="status">
+              Viser {synligeRom.length} av {rom.length} rom. Nøkkeltallene gjelder alle rom.
+            </p>
+          </section>
+        )}
+
+        {!laster && !feilmelding && rom.length > 0 && synligeRom.length === 0 && (
+          <section className="beskjed">
+            <h2>Ingen rom passer søket</h2>
+            <p>Prøv et annet romnummer eller endre filtrene.</p>
+            <button type="button" onClick={nullstillFiltre}>Vis alle rom</button>
+          </section>
+        )}
+
+        {!laster && !feilmelding && synligeRom.length > 0 && (
           <section className="romrutenett" aria-label="Romoversikt">
-            {rom.map((hotellrom) => (
+            {synligeRom.map((hotellrom) => (
               <Romkort
                 key={hotellrom.id}
                 rom={hotellrom}

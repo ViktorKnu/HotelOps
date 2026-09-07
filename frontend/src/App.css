@@ -170,7 +170,8 @@ h1 {
   font-weight: 700;
 }
 
-.skjemafelt input {
+.skjemafelt input,
+.skjemafelt select {
   width: 100%;
   height: 43px;
   padding: 0 0.75rem;
@@ -181,7 +182,8 @@ h1 {
   font: inherit;
 }
 
-.skjemafelt input:focus {
+.skjemafelt input:focus,
+.skjemafelt select:focus {
   border-color: var(--grønn-700);
   outline: 3px solid rgba(33, 100, 81, 0.16);
 }
@@ -245,6 +247,27 @@ h1 {
 .nøkkeltallkort--positiv { border-top-color: var(--grønn-700); }
 .nøkkeltallkort--advarsel { border-top-color: #d29a32; }
 .nøkkeltallkort--kritisk { border-top-color: #c96363; }
+
+.romfiltre {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filterresultat { grid-column: 1 / -1; margin: 0; color: var(--dempet); font-size: 0.85rem; }
+.nullstillknapp {
+  min-height: 43px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--kant);
+  border-radius: 8px;
+  color: var(--grønn-900);
+  background: var(--flate);
+  cursor: pointer;
+}
+.nullstillknapp:disabled { opacity: 0.5; cursor: default; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--grønn-700); outline-offset: 3px; }
 
 .romrutenett {
   display: grid;
@@ -420,12 +443,14 @@ h1 {
 }
 
 @media (max-width: 900px) {
+  .romfiltre { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .registreringspanel { grid-template-columns: 1fr; }
   .nøkkeltall { grid-template-columns: repeat(2, 1fr); }
   .romrutenett { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 620px) {
+  .romfiltre { grid-template-columns: 1fr; }
   .toppfelt { padding-inline: 1rem; }
   main { width: min(100% - 2rem, 1180px); padding-top: 2.5rem; }
   .sidehode { display: block; }

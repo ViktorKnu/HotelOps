@@ -21,6 +21,10 @@ EF Core-oppsett og en første PostgreSQL-migrering for rom er på plass.
 nye rom. Egne endepunkter utfører overgangene i rengjøringsflyten. Frontend viser
 romoversikten med separate statuser og nøkkeltall, har et enkelt skjema for å
 registrere rom og viser neste gyldige rengjøringshandling på hvert romkort.
+Romoversikten kan filtreres på romnummer, etasje og driftsbehov (klare for
+innsjekking, krever renhold eller driftsavvik). Filtrene kan kombineres og
+nullstilles. Nøkkeltallene viser alltid hele hotellet, mens treffantallet viser
+utvalget. Utvalget oppdateres også når rengjøringsstatus endres.
 
 ## Teknologistack
 
