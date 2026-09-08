@@ -27,11 +27,13 @@ nullstilles. Nøkkeltallene viser alltid hele hotellet, mens treffantallet viser
 utvalget. Utvalget oppdateres også når rengjøringsstatus endres.
 
 En egen renholdstavle viser skitne rom og rom under rengjøring i hver sin
-kolonne. Tavlen kan filtreres på etasje og sorterer rom etter etasje og
-romnummer i naturlig tallrekkefølge. Start og fullfør renhold direkte fra
+kolonne. Tavlen kan filtreres på etasje og viser hasteoppgaver først, deretter
+etasje og romnummer i naturlig tallrekkefølge. Start og fullfør renhold direkte fra
 romkortene; kolonner og nøkkeltall oppdateres etter vellykket lagring.
-Rene rom vises ikke på tavlen. Den bruker eksisterende romstatus og oppretter
-ikke egne oppgaveposter, ansattildelinger eller manuelle prioriteringer.
+Rene rom vises ikke på tavlen. Ansvarlig renholder og prioritet kan lagres på
+hvert rom via tavlen. Ansvarlig er et fritt navnefelt, ikke en kobling til et
+ansattregister. Tavlen bruker eksisterende romstatus uten egne oppgaveposter
+eller historikk. Tildeling og prioritet nullstilles når rengjøringen fullføres.
 
 ## Teknologistack
 
@@ -157,7 +159,9 @@ Eksempel på respons når et rom finnes:
     "beleggsstatus": "Ledig",
     "rengjøringsstatus": "Ren",
     "driftsstatus": "Operativ",
-    "erKlartForInnsjekking": true
+    "erKlartForInnsjekking": true,
+    "ansvarligRenholder": null,
+    "renholdsprioritet": "Normal"
   }
 ]
 ```
@@ -204,6 +208,31 @@ Autentisering og rollebasert tilgang er ikke implementert. Romoversikten er
 foreløpig ubeskyttet, og endepunktene for registrering og rengjøring er også
 åpne. Prosjektet er kun ment for lokal utvikling, ikke for offentlig bruk med
 reelle hotelldata.
+
+## Planlegge renhold
+
+`PATCH /api/rom/{romId}/rengjoring/planlegg` lagrer ansvarlig og prioritet
+for et skittent rom eller et rom under rengjøring:
+
+```json
+{
+  "ansvarligRenholder": "Kari",
+  "prioritet": "Haster"
+}
+```
+
+Prioritet må være `Normal` eller `Haster`. Navnet trimmes og kan ha maksimalt
+100 tegn. Null eller blankt navn fjerner tildelingen. Begge verdiene erstattes
+ved lagring. Endepunktet gir oppdatert rom ved `200 OK`, `400` ved ugyldige
+felt, `404` for ukjent rom og `409` for et rent rom. Endepunktet er ubeskyttet
+på samme måte som de øvrige romendepunktene.
+
+Migreringen `LeggTilRenholdsplanlegging` legger til feltene. Eksisterende rom
+får normal prioritet og ingen ansvarlig. Kjør migreringen før oppdatert API:
+
+```bash
+dotnet ef database update --project backend/HotelOps.Infrastruktur --startup-project backend/HotelOps.Api -- --environment Development
+```
 
 ## Videre utvikling
 

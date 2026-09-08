@@ -5,6 +5,44 @@ namespace HotelOps.DomeneTester.Romadministrasjon;
 public sealed class RomTester
 {
     [Fact]
+    public void RenholdsplanBevaresVedStartOgNullstillesVedFullføring()
+    {
+        var rom = new Rom("101", 1);
+        rom.MarkerSomSkitten();
+        rom.PlanleggRenhold("  Kari  ", Renholdsprioritet.Haster);
+        rom.StartRengjøring();
+        Assert.Equal("Kari", rom.AnsvarligRenholder);
+        Assert.Equal(Renholdsprioritet.Haster, rom.Renholdsprioritet);
+        rom.FullførRengjøring();
+        rom.MarkerSomSkitten();
+        Assert.Null(rom.AnsvarligRenholder);
+        Assert.Equal(Renholdsprioritet.Normal, rom.Renholdsprioritet);
+    }
+
+    [Fact]
+    public void RenholdsplanKanEndresOgTildelingFjernesUnderRengjøring()
+    {
+        var rom = new Rom("101", 1, rengjøringsstatus: Rengjøringsstatus.UnderRengjøring);
+        rom.PlanleggRenhold("Kari", Renholdsprioritet.Haster);
+        rom.PlanleggRenhold("  ", Renholdsprioritet.Normal);
+        Assert.Null(rom.AnsvarligRenholder);
+        Assert.Equal(Renholdsprioritet.Normal, rom.Renholdsprioritet);
+    }
+
+    [Fact]
+    public void UgyldigPlanEndrerIkkeEksisterendeTildeling()
+    {
+        var rom = new Rom("101", 1, rengjøringsstatus: Rengjøringsstatus.Skitten);
+        rom.PlanleggRenhold("Kari", Renholdsprioritet.Haster);
+        Assert.Throws<ArgumentException>(() => rom.PlanleggRenhold(new string('a', 101), Renholdsprioritet.Normal));
+        Assert.Throws<ArgumentException>(() => rom.PlanleggRenhold("Ola", (Renholdsprioritet)99));
+        Assert.Equal("Kari", rom.AnsvarligRenholder);
+        Assert.Equal(Renholdsprioritet.Haster, rom.Renholdsprioritet);
+        Assert.Throws<UgyldigRengjøringsovergangException>(() =>
+            new Rom("102", 1).PlanleggRenhold("Ola", Renholdsprioritet.Normal));
+    }
+
+    [Fact]
     public void NyttRomMedStandardstatusErKlartForInnsjekking()
     {
         var rom = new Rom("101", 1);

@@ -32,3 +32,14 @@ PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/start
 PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/fullfor
 
 ###
+
+# Bruk et rom som er skittent eller under rengjøring.
+PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/planlegg
+Content-Type: application/json
+
+{
+  "ansvarligRenholder": "Kari",
+  "prioritet": "Haster"
+}
+
+###

@@ -4,6 +4,10 @@ namespace HotelOps.Applikasjon.Romadministrasjon;
 
 public sealed class Romrengjøring(IRomskriver romskriver)
 {
+    public Task<RomDto?> PlanleggAsync(Guid romId, string? ansvarligRenholder,
+        Renholdsprioritet prioritet, CancellationToken avbryt = default) =>
+        EndreStatusAsync(romId, rom => rom.PlanleggRenhold(ansvarligRenholder, prioritet), avbryt);
+
     public Task<RomDto?> MarkerSomSkittenAsync(
         Guid romId,
         CancellationToken avbryt = default) =>

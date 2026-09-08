@@ -5,6 +5,8 @@ export type Rengjøringsstatus = 'Ren' | 'Skitten' | 'UnderRengjøring'
 export type Driftsstatus = 'Operativ' | 'UnderVedlikehold' | 'UteAvDrift'
 
 export interface Rom {
+  ansvarligRenholder: string | null
+  renholdsprioritet: 'Normal' | 'Haster'
   id: string
   nummer: string
   etasje: number

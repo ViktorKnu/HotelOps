@@ -9,7 +9,9 @@ public sealed record RomDto(
     Beleggsstatus Beleggsstatus,
     Rengjøringsstatus Rengjøringsstatus,
     Driftsstatus Driftsstatus,
-    bool ErKlartForInnsjekking)
+    bool ErKlartForInnsjekking,
+    string? AnsvarligRenholder,
+    Renholdsprioritet Renholdsprioritet)
 {
     public static RomDto FraRom(Rom rom) => new(
         rom.Id,
@@ -18,5 +20,7 @@ public sealed record RomDto(
         rom.Beleggsstatus,
         rom.Rengjøringsstatus,
         rom.Driftsstatus,
-        rom.ErKlartForInnsjekking);
+        rom.ErKlartForInnsjekking,
+        rom.AnsvarligRenholder,
+        rom.Renholdsprioritet);
 }

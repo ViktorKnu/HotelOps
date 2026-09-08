@@ -97,6 +97,30 @@ public static class Romendepunkter
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
+        ruter.MapPatch("/api/rom/{romId:guid}/rengjoring/planlegg", async (
+            Guid romId, PlanleggRenholdForespørsel forespørsel,
+            Romrengjøring romrengjøring, CancellationToken avbryt) =>
+        {
+            var feil = new Dictionary<string, string[]>();
+            if (forespørsel.Prioritet is not ("Normal" or "Haster"))
+                feil["prioritet"] = ["Velg Normal eller Haster."];
+            if (forespørsel.AnsvarligRenholder?.Trim().Length > 100)
+                feil["ansvarligRenholder"] = ["Navnet kan ha maksimalt 100 tegn."];
+            if (feil.Count > 0)
+                return Results.ValidationProblem(feil, title: "Renholdet kunne ikke planlegges.");
+
+            var prioritet = Enum.Parse<Renholdsprioritet>(forespørsel.Prioritet!);
+            return await UtførRengjøringsendringAsync(romId,
+                () => romrengjøring.PlanleggAsync(romId, forespørsel.AnsvarligRenholder, prioritet, avbryt));
+        })
+        .WithName("PlanleggRenhold")
+        .WithTags("Rom")
+        .Produces<RomDto>()
+        .ProducesValidationProblem()
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status500InternalServerError);
+
         return ruter;
     }
 

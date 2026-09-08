@@ -17,6 +17,9 @@ internal sealed class RomKonfigurasjon : IEntityTypeConfiguration<Rom>
         rom.Property(r => r.Beleggsstatus).HasConversion<string>().HasMaxLength(32);
         rom.Property(r => r.Rengjøringsstatus).HasConversion<string>().HasMaxLength(32);
         rom.Property(r => r.Driftsstatus).HasConversion<string>().HasMaxLength(32);
+        rom.Property(r => r.AnsvarligRenholder).HasMaxLength(100);
+        rom.Property(r => r.Renholdsprioritet).HasConversion<string>().HasMaxLength(32)
+            .HasDefaultValue(Renholdsprioritet.Normal);
 
         rom.Ignore(r => r.ErKlartForInnsjekking);
     }

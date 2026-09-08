@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { Rengjøringshandling } from '../tjenester/romtjeneste'
+import { useState, type FormEvent } from 'react'
+import type { Rengjøringshandling, Renholdsplan } from '../tjenester/romtjeneste'
 import type {
   Beleggsstatus,
   Driftsstatus,
@@ -32,6 +32,7 @@ const statusstil: Record<Romstatus, string> = {
 }
 
 interface RomkortEgenskaper {
+  onPlanleggRenhold?: (romId: string, plan: Renholdsplan) => Promise<void>
   rom: Rom
   onEndreRengjøringsstatus: (
     romId: string,
@@ -59,14 +60,16 @@ function Statusmerke({ navn, status }: { navn: string; status: Romstatus }) {
   )
 }
 
-export function Romkort({ rom, onEndreRengjøringsstatus }: RomkortEgenskaper) {
+export function Romkort({ rom, onEndreRengjøringsstatus, onPlanleggRenhold }: RomkortEgenskaper) {
   const [utførerHandling, setUtførerHandling] = useState(false)
+  const [lagret, setLagret] = useState(false)
   const [feilmelding, setFeilmelding] = useState<string | null>(null)
   const nesteHandling = nesteRengjøringshandling[rom.rengjøringsstatus]
 
   async function utførRengjøringshandling() {
     setUtførerHandling(true)
     setFeilmelding(null)
+    setLagret(false)
 
     try {
       await onEndreRengjøringsstatus(rom.id, nesteHandling.handling)
@@ -76,6 +79,26 @@ export function Romkort({ rom, onEndreRengjøringsstatus }: RomkortEgenskaper) {
           ? feil.message
           : 'Rengjøringsstatusen kunne ikke endres.',
       )
+    } finally {
+      setUtførerHandling(false)
+    }
+  }
+
+  async function lagrePlan(hendelse: FormEvent<HTMLFormElement>) {
+    hendelse.preventDefault()
+    if (!onPlanleggRenhold || utførerHandling) return
+    const data = new FormData(hendelse.currentTarget)
+    setUtførerHandling(true)
+    setFeilmelding(null)
+    setLagret(false)
+    try {
+      await onPlanleggRenhold(rom.id, {
+        ansvarligRenholder: String(data.get('ansvarligRenholder') ?? ''),
+        prioritet: data.get('prioritet') === 'Haster' ? 'Haster' : 'Normal',
+      })
+      setLagret(true)
+    } catch (feil) {
+      setFeilmelding(feil instanceof Error ? feil.message : 'Renholdet kunne ikke planlegges.')
     } finally {
       setUtførerHandling(false)
     }
@@ -102,6 +125,37 @@ export function Romkort({ rom, onEndreRengjøringsstatus }: RomkortEgenskaper) {
         <Statusmerke navn="Renhold" status={rom.rengjøringsstatus} />
         <Statusmerke navn="Drift" status={rom.driftsstatus} />
       </dl>
+
+      {rom.rengjøringsstatus !== 'Ren' && (
+        <p className="renholdsdetaljer">
+          <strong>{rom.renholdsprioritet === 'Haster' ? 'Haster' : 'Normal prioritet'}</strong>
+          {' · '}{rom.ansvarligRenholder || 'Ikke tildelt'}
+        </p>
+      )}
+
+      {onPlanleggRenhold && rom.rengjøringsstatus !== 'Ren' && (
+        <form className="renholdsplan" onSubmit={(hendelse) => void lagrePlan(hendelse)}
+          key={`${rom.ansvarligRenholder}-${rom.renholdsprioritet}`}
+          onChange={() => setLagret(false)}>
+          <fieldset disabled={utførerHandling}>
+            <legend>Planlegg renhold for rom {rom.nummer}</legend>
+            <div className="skjemafelt">
+              <label htmlFor={`ansvarlig-${rom.id}`}>Ansvarlig renholder</label>
+              <input id={`ansvarlig-${rom.id}`} name="ansvarligRenholder" maxLength={100}
+                defaultValue={rom.ansvarligRenholder ?? ''} placeholder="Ikke tildelt" />
+            </div>
+            <div className="skjemafelt">
+              <label htmlFor={`prioritet-${rom.id}`}>Prioritet</label>
+              <select id={`prioritet-${rom.id}`} name="prioritet" defaultValue={rom.renholdsprioritet}>
+                <option value="Normal">Normal</option>
+                <option value="Haster">Haster</option>
+              </select>
+            </div>
+            <button className="lagreknapp" type="submit">Lagre plan</button>
+          </fieldset>
+          <p role="status">{lagret ? 'Renholdsplanen er lagret.' : ''}</p>
+        </form>
+      )}
 
       <div className="romkort__handling">
         <button

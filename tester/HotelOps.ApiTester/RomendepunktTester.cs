@@ -14,6 +14,60 @@ namespace HotelOps.ApiTester;
 public sealed class RomendepunktTester
 {
     [Fact]
+    public async Task RenholdsplanLagresOgReturneresIOversikten()
+    {
+        var rom = new Rom("101", 1, rengjøringsstatus: Rengjøringsstatus.Skitten);
+        var skriver = new TestRomskriver(rom: rom);
+        await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
+        using var klient = fabrikk.CreateClient();
+        using var svar = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
+            new { ansvarligRenholder = " Kari ", prioritet = "Haster" });
+        Assert.Equal(HttpStatusCode.OK, svar.StatusCode);
+        Assert.Equal(1, skriver.AntallLagringer);
+        using var dokument = JsonDocument.Parse(await svar.Content.ReadAsStringAsync());
+        Assert.Equal("Kari", dokument.RootElement.GetProperty("ansvarligRenholder").GetString());
+        Assert.Equal("Haster", dokument.RootElement.GetProperty("renholdsprioritet").GetString());
+        using var oversikt = await klient.GetAsync("/api/rom");
+        using var liste = JsonDocument.Parse(await oversikt.Content.ReadAsStringAsync());
+        Assert.Equal("Kari", liste.RootElement[0].GetProperty("ansvarligRenholder").GetString());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("Ukjent")]
+    [InlineData("1")]
+    public async Task UgyldigPrioritetGir400UtenLagring(string? prioritet)
+    {
+        var rom = new Rom("101", 1, rengjøringsstatus: Rengjøringsstatus.Skitten);
+        var skriver = new TestRomskriver(rom: rom);
+        await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
+        using var klient = fabrikk.CreateClient();
+        using var svar = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
+            new { ansvarligRenholder = "Kari", prioritet });
+        Assert.Equal(HttpStatusCode.BadRequest, svar.StatusCode);
+        Assert.Equal(0, skriver.AntallLagringer);
+    }
+
+    [Fact]
+    public async Task PlanleggingAvviserLangtNavnRentRomOgUkjentRom()
+    {
+        var rom = new Rom("101", 1);
+        var skriver = new TestRomskriver(rom: rom);
+        await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
+        using var klient = fabrikk.CreateClient();
+        using var langtNavn = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
+            new { ansvarligRenholder = new string('a', 101), prioritet = "Normal" });
+        Assert.Equal(HttpStatusCode.BadRequest, langtNavn.StatusCode);
+        using var rentRom = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
+            new { ansvarligRenholder = "Kari", prioritet = "Normal" });
+        Assert.Equal(HttpStatusCode.Conflict, rentRom.StatusCode);
+        using var ukjent = await klient.PatchAsJsonAsync($"/api/rom/{Guid.NewGuid()}/rengjoring/planlegg",
+            new { ansvarligRenholder = "Kari", prioritet = "Normal" });
+        Assert.Equal(HttpStatusCode.NotFound, ukjent.StatusCode);
+        Assert.Equal(0, skriver.AntallLagringer);
+    }
+
+    [Fact]
     public async Task TomRomoversiktGir200OgTomListe()
     {
         await using var fabrikk = new RomApiFabrikk(new TestRomleser([]));

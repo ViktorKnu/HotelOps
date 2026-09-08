@@ -1,20 +1,22 @@
 import { useState } from 'react'
 import type { Rom } from '../typer/rom'
-import type { Rengjøringshandling } from '../tjenester/romtjeneste'
+import type { Rengjøringshandling, Renholdsplan } from '../tjenester/romtjeneste'
 import { Romkort } from './Romkort'
 
 interface RenholdstavleEgenskaper {
+  onPlanleggRenhold: (romId: string, plan: Renholdsplan) => Promise<void>
   rom: Rom[]
   onEndreRengjøringsstatus: (romId: string, handling: Rengjøringshandling) => Promise<void>
 }
 
-export function Renholdstavle({ rom, onEndreRengjøringsstatus }: RenholdstavleEgenskaper) {
+export function Renholdstavle({ rom, onEndreRengjøringsstatus, onPlanleggRenhold }: RenholdstavleEgenskaper) {
   const [etasje, setEtasje] = useState('alle')
   const etasjer = [...new Set(rom.map((hotellrom) => hotellrom.etasje))].sort((a, b) => a - b)
   const renholdsrom = rom
     .filter((hotellrom) => hotellrom.rengjøringsstatus !== 'Ren')
     .filter((hotellrom) => etasje === 'alle' || String(hotellrom.etasje) === etasje)
-    .sort((a, b) => a.etasje - b.etasje || a.nummer.localeCompare(b.nummer, 'nb', { numeric: true }))
+    .sort((a, b) => Number(b.renholdsprioritet === 'Haster') - Number(a.renholdsprioritet === 'Haster')
+      || a.etasje - b.etasje || a.nummer.localeCompare(b.nummer, 'nb', { numeric: true }))
   const kolonner = [
     { status: 'Skitten', tittel: 'Venter på renhold', tomtekst: 'Ingen rom venter på renhold.' },
     { status: 'UnderRengjøring', tittel: 'Under rengjøring', tomtekst: 'Ingen rengjøring pågår.' },
@@ -25,7 +27,7 @@ export function Renholdstavle({ rom, onEndreRengjøringsstatus }: RenholdstavleE
       <div className="renholdshode">
         <div>
           <h2 id="renholdsoverskrift">Renholdstavle</h2>
-          <p>Start og fullfør renhold. Ferdige rom fjernes fra tavlen.</p>
+          <p>Hasteoppgaver vises først. Tildel renhold, start og fullfør. Ferdige rom fjernes fra tavlen.</p>
         </div>
         <div className="skjemafelt">
           <label htmlFor="renholdsetasje">Etasje</label>
@@ -54,6 +56,7 @@ export function Renholdstavle({ rom, onEndreRengjøringsstatus }: RenholdstavleE
                 ? <p className="renholdstom">{kolonne.tomtekst}</p>
                 : kolonnerom.map((hotellrom) => (
                   <Romkort key={hotellrom.id} rom={hotellrom}
+                    onPlanleggRenhold={onPlanleggRenhold}
                     onEndreRengjøringsstatus={onEndreRengjøringsstatus} />
                 ))}
             </section>

@@ -107,3 +107,31 @@ export async function endreRengjøringsstatus(
 }
 
 class Romstatusfeil extends Error {}
+
+export interface Renholdsplan {
+  ansvarligRenholder: string
+  prioritet: Rom['renholdsprioritet']
+}
+
+export async function planleggRenhold(romId: string, plan: Renholdsplan): Promise<Rom> {
+  try {
+    const svar = await fetch(`/api/rom/${romId}/rengjoring/planlegg`, {
+      method: 'PATCH',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(plan),
+    })
+    if (!svar.ok) {
+      let melding = 'Renholdet kunne ikke planlegges.'
+      try {
+        const problem = await svar.json() as ProblemDetaljer
+        melding = Object.values(problem.errors ?? {}).flat()[0]
+          ?? problem.detail ?? problem.title ?? melding
+      } catch { /* Bruk standardmeldingen når svaret ikke er JSON. */ }
+      throw new Romstatusfeil(melding)
+    }
+    return await svar.json() as Rom
+  } catch (feil) {
+    if (feil instanceof Romstatusfeil) throw feil
+    throw new Romstatusfeil('Renholdet kunne ikke planlegges. Kontroller tilkoblingen og prøv igjen.')
+  }
+}

@@ -5,6 +5,8 @@ import { Renholdstavle } from '../komponenter/Renholdstavle'
 import {
   endreRengjøringsstatus,
   hentRom,
+  planleggRenhold,
+  type Renholdsplan,
   type Rengjøringshandling,
 } from '../tjenester/romtjeneste'
 import type { Rom } from '../typer/rom'
@@ -97,6 +99,12 @@ export function RomoversiktSide() {
         hotellrom.id === oppdatertRom.id ? oppdatertRom : hotellrom,
       ),
     )
+  }
+
+  async function oppdaterRenholdsplan(romId: string, plan: Renholdsplan) {
+    const oppdatertRom = await planleggRenhold(romId, plan)
+    setRom((registrerteRom) => registrerteRom.map((hotellrom) =>
+      hotellrom.id === oppdatertRom.id ? oppdatertRom : hotellrom))
   }
 
   return (
@@ -195,7 +203,8 @@ export function RomoversiktSide() {
         )}
 
         {!laster && !feilmelding && rom.length > 0 && visning === 'renhold' && (
-          <Renholdstavle rom={rom} onEndreRengjøringsstatus={oppdaterRengjøringsstatus} />
+          <Renholdstavle rom={rom} onEndreRengjøringsstatus={oppdaterRengjøringsstatus}
+            onPlanleggRenhold={oppdaterRenholdsplan} />
         )}
 
         {!laster && !feilmelding && rom.length > 0 && visning === 'rom' && (

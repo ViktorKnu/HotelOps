@@ -38,6 +38,24 @@ public sealed class Rom
 
     public Driftsstatus Driftsstatus { get; private set; }
 
+    public string? AnsvarligRenholder { get; private set; }
+
+    public Renholdsprioritet Renholdsprioritet { get; private set; }
+
+    public void PlanleggRenhold(string? ansvarligRenholder, Renholdsprioritet prioritet)
+    {
+        if (Rengjøringsstatus == Rengjøringsstatus.Ren)
+            throw new UgyldigRengjøringsovergangException("Bare rom med aktivt renholdsbehov kan planlegges.");
+        if (!Enum.IsDefined(prioritet))
+            throw new ArgumentException("Velg Normal eller Haster.", nameof(prioritet));
+        var navn = ansvarligRenholder?.Trim();
+        if (navn?.Length > 100)
+            throw new ArgumentException("Navnet kan ha maksimalt 100 tegn.", nameof(ansvarligRenholder));
+
+        AnsvarligRenholder = string.IsNullOrEmpty(navn) ? null : navn;
+        Renholdsprioritet = prioritet;
+    }
+
     public bool ErKlartForInnsjekking =>
         Beleggsstatus == Beleggsstatus.Ledig &&
         Rengjøringsstatus == Rengjøringsstatus.Ren &&
@@ -74,5 +92,7 @@ public sealed class Rom
         }
 
         Rengjøringsstatus = Rengjøringsstatus.Ren;
+        AnsvarligRenholder = null;
+        Renholdsprioritet = Renholdsprioritet.Normal;
     }
 }
