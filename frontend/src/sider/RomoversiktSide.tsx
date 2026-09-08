@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Romkort } from '../komponenter/Romkort'
 import { RegistrerRomskjema } from '../komponenter/RegistrerRomskjema'
+import { Renholdstavle } from '../komponenter/Renholdstavle'
 import {
   endreRengjøringsstatus,
   hentRom,
@@ -17,6 +18,7 @@ export function RomoversiktSide() {
   const [søk, setSøk] = useState('')
   const [etasje, setEtasje] = useState('alle')
   const [statusfilter, setStatusfilter] = useState('alle')
+  const [visning, setVisning] = useState<'rom' | 'renhold'>('rom')
 
   useEffect(() => {
     const avbryter = new AbortController()
@@ -158,6 +160,13 @@ export function RomoversiktSide() {
           </section>
         )}
 
+        <div className="visningsvalg" role="group" aria-label="Velg visning">
+          <button type="button" aria-pressed={visning === 'rom'}
+            onClick={() => setVisning('rom')}>Alle rom</button>
+          <button type="button" aria-pressed={visning === 'renhold'}
+            onClick={() => setVisning('renhold')}>Renholdstavle</button>
+        </div>
+
         {laster && (
           <section className="beskjed" aria-live="polite">
             <span className="lasteindikator" aria-hidden="true" />
@@ -185,7 +194,11 @@ export function RomoversiktSide() {
           </section>
         )}
 
-        {!laster && !feilmelding && rom.length > 0 && (
+        {!laster && !feilmelding && rom.length > 0 && visning === 'renhold' && (
+          <Renholdstavle rom={rom} onEndreRengjøringsstatus={oppdaterRengjøringsstatus} />
+        )}
+
+        {!laster && !feilmelding && rom.length > 0 && visning === 'rom' && (
           <section className="romfiltre" aria-label="Søk og filtrer rom">
             <div className="skjemafelt">
               <label htmlFor="romsøk">Søk etter romnummer</label>
@@ -222,7 +235,7 @@ export function RomoversiktSide() {
           </section>
         )}
 
-        {!laster && !feilmelding && rom.length > 0 && synligeRom.length === 0 && (
+        {!laster && !feilmelding && rom.length > 0 && synligeRom.length === 0 && visning === 'rom' && (
           <section className="beskjed">
             <h2>Ingen rom passer søket</h2>
             <p>Prøv et annet romnummer eller endre filtrene.</p>
@@ -230,7 +243,7 @@ export function RomoversiktSide() {
           </section>
         )}
 
-        {!laster && !feilmelding && synligeRom.length > 0 && (
+        {!laster && !feilmelding && synligeRom.length > 0 && visning === 'rom' && (
           <section className="romrutenett" aria-label="Romoversikt">
             {synligeRom.map((hotellrom) => (
               <Romkort

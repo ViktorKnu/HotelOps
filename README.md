@@ -26,6 +26,13 @@ innsjekking, krever renhold eller driftsavvik). Filtrene kan kombineres og
 nullstilles. Nøkkeltallene viser alltid hele hotellet, mens treffantallet viser
 utvalget. Utvalget oppdateres også når rengjøringsstatus endres.
 
+En egen renholdstavle viser skitne rom og rom under rengjøring i hver sin
+kolonne. Tavlen kan filtreres på etasje og sorterer rom etter etasje og
+romnummer i naturlig tallrekkefølge. Start og fullfør renhold direkte fra
+romkortene; kolonner og nøkkeltall oppdateres etter vellykket lagring.
+Rene rom vises ikke på tavlen. Den bruker eksisterende romstatus og oppretter
+ikke egne oppgaveposter, ansattildelinger eller manuelle prioriteringer.
+
 ## Teknologistack
 
 - ASP.NET Core Web API og C#

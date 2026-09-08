@@ -438,6 +438,30 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--grønn-700); ou
 
 @keyframes roter { to { transform: rotate(360deg); } }
 
+.visningsvalg { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+.visningsvalg button {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--kant);
+  border-radius: 9px;
+  color: var(--grønn-900);
+  background: var(--flate);
+  cursor: pointer;
+  font-weight: 700;
+}
+.visningsvalg button[aria-pressed="true"] { background: var(--grønn-700); color: #fff; }
+.renholdshode { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; }
+.renholdshode h2 { margin: 0; color: var(--grønn-900); }
+.renholdshode p { margin: 0.5rem 0 0; color: var(--dempet); line-height: 1.5; }
+.renholdshode .skjemafelt { min-width: 160px; }
+.renholdsoppsummering { color: var(--dempet); font-size: 0.85rem; margin: 1.25rem 0; }
+.renholdstavle { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.renholdskolonne { padding: 1rem; border: 1px solid var(--kant); border-radius: 16px; background: #edf1ed; }
+.renholdskolonne h3 { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin: 0 0 1rem; font-size: 1rem; }
+.renholdskolonne .romkort + .romkort { margin-top: 1rem; }
+.renholdsantall { padding: 0.25rem 0.6rem; border-radius: 999px; background: var(--flate); font-variant-numeric: tabular-nums; }
+.renholdstom { margin: 0; padding: 2rem 0.5rem; color: var(--dempet); text-align: center; line-height: 1.5; }
+.romkort h2 { overflow-wrap: anywhere; }
+
 @media (prefers-reduced-motion: reduce) {
   .lasteindikator { animation: none; }
 }
@@ -450,6 +474,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--grønn-700); ou
 }
 
 @media (max-width: 620px) {
+  .renholdstavle { grid-template-columns: 1fr; }
+  .renholdshode { display: grid; }
+  .renholdskolonne { padding: 0.75rem; }
   .romfiltre { grid-template-columns: 1fr; }
   .toppfelt { padding-inline: 1rem; }
   main { width: min(100% - 2rem, 1180px); padding-top: 2.5rem; }
