@@ -31,6 +31,15 @@ internal sealed class Romskriver(HotellDbContext database) : IRomskriver
         }
     }
 
-    public async Task LagreEndringerAsync(CancellationToken avbryt = default) =>
-        await database.SaveChangesAsync(avbryt);
+    public async Task LagreEndringerAsync(CancellationToken avbryt = default)
+    {
+        try
+        {
+            await database.SaveChangesAsync(avbryt);
+        }
+        catch (DbUpdateConcurrencyException feil)
+        {
+            throw new RomkonfliktException(feil);
+        }
+    }
 }

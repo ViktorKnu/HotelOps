@@ -234,6 +234,24 @@ får normal prioritet og ingen ansvarlig. Kjør migreringen før oppdatert API:
 dotnet ef database update --project backend/HotelOps.Infrastruktur --startup-project backend/HotelOps.Api -- --environment Development
 ```
 
+## Samtidige endringer
+
+Ved lagring kontrollerer EF Core at rommets status, ansvarlig renholder og
+prioritet fortsatt samsvarer med verdiene lest av API-forespørselen. Hvis en
+annen forespørsel har endret disse i mellomtiden, avvises lagringen med
+`409 Conflict` og en melding om å oppdatere oversikten. Endringen forsøkes
+ikke automatisk på nytt. Knappen «Oppdater oversikten» henter siste romdata.
+
+Kontrollen gjelder overlappende API-forespørsler. En gammel nettleservisning
+oppdages ikke hvis den andre endringen allerede er lagret før API-et leser
+rommet. Dette krever senere versjonskontroll fra klienten. Oppdatering av
+oversikten lukker åpne renholdsplaner og forkaster ulagrede skjemaendringer.
+
+Migreringen `KontrollerSamtidigeRomendringer` registrerer endringen i
+EF-modellen uten å endre tabellkolonnene. Testene simulerer lagringskonflikt
+og kontrollerer HTTP-svar; samtidige transaksjoner mot PostgreSQL er ikke
+dekket av disse testene.
+
 ## Videre utvikling
 
 Funksjonalitet og dokumentasjon utvides i små, avgrensede steg. README-en skal

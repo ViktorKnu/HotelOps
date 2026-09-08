@@ -128,6 +128,10 @@ export function RomoversiktSide() {
             </p>
           </div>
           <div className="sidehandlinger">
+            <button className="nullstillknapp" type="button" disabled={laster}
+              onClick={() => setForsøk((verdi) => verdi + 1)}>
+              {laster ? 'Oppdaterer …' : 'Oppdater oversikten'}
+            </button>
             <div className="oppdatering" aria-live="polite">
               {laster ? 'Oppdaterer oversikten …' : `${rom.length} rom registrert`}
             </div>

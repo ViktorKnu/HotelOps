@@ -13,6 +13,29 @@ namespace HotelOps.ApiTester;
 
 public sealed class RomendepunktTester
 {
+    [Theory]
+    [InlineData("marker-skitten", Rengjøringsstatus.Ren)]
+    [InlineData("start", Rengjøringsstatus.Skitten)]
+    [InlineData("fullfor", Rengjøringsstatus.UnderRengjøring)]
+    [InlineData("planlegg", Rengjøringsstatus.Skitten)]
+    public async Task SamtidigLagringGir409MedVeiledning(string handling, Rengjøringsstatus status)
+    {
+        var rom = new Rom("101", 1, rengjøringsstatus: status);
+        var skriver = new TestRomskriver(rom: rom, lagringskonflikt: true);
+        await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
+        using var klient = fabrikk.CreateClient();
+        using var innhold = handling == "planlegg"
+            ? JsonContent.Create(new { ansvarligRenholder = "Kari", prioritet = "Haster" }) : null;
+        using var svar = await klient.PatchAsync($"/api/rom/{rom.Id}/rengjoring/{handling}", innhold);
+        Assert.Equal(HttpStatusCode.Conflict, svar.StatusCode);
+        Assert.Equal("application/problem+json", svar.Content.Headers.ContentType?.MediaType);
+        using var dokument = JsonDocument.Parse(await svar.Content.ReadAsStringAsync());
+        Assert.Equal("Rommet er endret av en annen bruker.", dokument.RootElement.GetProperty("title").GetString());
+        Assert.Contains("Oppdater oversikten og prøv igjen", dokument.RootElement.GetProperty("detail").GetString());
+        Assert.DoesNotContain("intern-testdetalj", await svar.Content.ReadAsStringAsync());
+        Assert.Equal(0, skriver.AntallLagringer);
+    }
+
     [Fact]
     public async Task RenholdsplanLagresOgReturneresIOversikten()
     {
@@ -328,7 +351,7 @@ public sealed class RomendepunktTester
             throw new InvalidOperationException("intern-testdetalj");
     }
 
-    private sealed class TestRomskriver(bool kanLagre = true, Rom? rom = null) : IRomskriver
+    private sealed class TestRomskriver(bool kanLagre = true, Rom? rom = null, bool lagringskonflikt = false) : IRomskriver
     {
         public Rom? SistLagtTil { get; private set; }
 
@@ -348,6 +371,8 @@ public sealed class RomendepunktTester
 
         public Task LagreEndringerAsync(CancellationToken avbryt = default)
         {
+            if (lagringskonflikt)
+                throw new RomkonfliktException(new Exception("intern-testdetalj"));
             AntallLagringer++;
             return Task.CompletedTask;
         }

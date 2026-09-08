@@ -139,6 +139,13 @@ public static class Romendepunkter
                     detail: $"Fant ikke rom med ID {romId}.")
                 : Results.Ok(rom);
         }
+        catch (RomkonfliktException feil)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Rommet er endret av en annen bruker.",
+                detail: feil.Message);
+        }
         catch (UgyldigRengjøringsovergangException feil)
         {
             return Results.Problem(
