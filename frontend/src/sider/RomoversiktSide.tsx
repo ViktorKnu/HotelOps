@@ -92,8 +92,9 @@ export function RomoversiktSide() {
   async function oppdaterRengjøringsstatus(
     romId: string,
     handling: Rengjøringshandling,
+    versjon: string,
   ) {
-    const oppdatertRom = await endreRengjøringsstatus(romId, handling)
+    const oppdatertRom = await endreRengjøringsstatus(romId, handling, versjon)
     setRom((registrerteRom) =>
       registrerteRom.map((hotellrom) =>
         hotellrom.id === oppdatertRom.id ? oppdatertRom : hotellrom,
@@ -101,8 +102,8 @@ export function RomoversiktSide() {
     )
   }
 
-  async function oppdaterRenholdsplan(romId: string, plan: Renholdsplan) {
-    const oppdatertRom = await planleggRenhold(romId, plan)
+  async function oppdaterRenholdsplan(romId: string, plan: Renholdsplan, versjon: string) {
+    const oppdatertRom = await planleggRenhold(romId, plan, versjon)
     setRom((registrerteRom) => registrerteRom.map((hotellrom) =>
       hotellrom.id === oppdatertRom.id ? oppdatertRom : hotellrom))
   }

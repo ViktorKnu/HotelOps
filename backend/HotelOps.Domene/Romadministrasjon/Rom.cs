@@ -28,6 +28,8 @@ public sealed class Rom
 
     public Guid Id { get; private set; }
 
+    public Guid Versjon { get; private set; } = Guid.NewGuid();
+
     public string Nummer { get; private set; } = null!;
 
     public int Etasje { get; private set; }
@@ -54,6 +56,7 @@ public sealed class Rom
 
         AnsvarligRenholder = string.IsNullOrEmpty(navn) ? null : navn;
         Renholdsprioritet = prioritet;
+        Versjon = Guid.NewGuid();
     }
 
     public bool ErKlartForInnsjekking =>
@@ -70,6 +73,7 @@ public sealed class Rom
         }
 
         Rengjøringsstatus = Rengjøringsstatus.Skitten;
+        Versjon = Guid.NewGuid();
     }
 
     public void StartRengjøring()
@@ -81,6 +85,7 @@ public sealed class Rom
         }
 
         Rengjøringsstatus = Rengjøringsstatus.UnderRengjøring;
+        Versjon = Guid.NewGuid();
     }
 
     public void FullførRengjøring()
@@ -94,5 +99,6 @@ public sealed class Rom
         Rengjøringsstatus = Rengjøringsstatus.Ren;
         AnsvarligRenholder = null;
         Renholdsprioritet = Renholdsprioritet.Normal;
+        Versjon = Guid.NewGuid();
     }
 }

@@ -5,6 +5,25 @@ namespace HotelOps.DomeneTester.Romadministrasjon;
 public sealed class RomTester
 {
     [Fact]
+    public void HverGyldigeEndringGirNyVersjonOgsåNårStatusGårTilbakeTilStart()
+    {
+        var rom = new Rom("101", 1);
+        var versjoner = new HashSet<Guid> { rom.Versjon };
+        rom.MarkerSomSkitten();
+        Assert.True(versjoner.Add(rom.Versjon));
+        rom.PlanleggRenhold("Kari", Renholdsprioritet.Haster);
+        Assert.True(versjoner.Add(rom.Versjon));
+        rom.StartRengjøring();
+        Assert.True(versjoner.Add(rom.Versjon));
+        rom.FullførRengjøring();
+        Assert.True(versjoner.Add(rom.Versjon));
+        Assert.DoesNotContain(Guid.Empty, versjoner);
+        var siste = rom.Versjon;
+        Assert.Throws<UgyldigRengjøringsovergangException>(rom.StartRengjøring);
+        Assert.Equal(siste, rom.Versjon);
+    }
+
+    [Fact]
     public void RenholdsplanBevaresVedStartOgNullstillesVedFullføring()
     {
         var rom = new Rom("101", 1);

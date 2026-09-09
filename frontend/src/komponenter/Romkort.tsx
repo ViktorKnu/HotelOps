@@ -32,11 +32,12 @@ const statusstil: Record<Romstatus, string> = {
 }
 
 interface RomkortEgenskaper {
-  onPlanleggRenhold?: (romId: string, plan: Renholdsplan) => Promise<void>
+  onPlanleggRenhold?: (romId: string, plan: Renholdsplan, versjon: string) => Promise<void>
   rom: Rom
   onEndreRengjøringsstatus: (
     romId: string,
     handling: Rengjøringshandling,
+    versjon: string,
   ) => Promise<void>
 }
 
@@ -72,7 +73,7 @@ export function Romkort({ rom, onEndreRengjøringsstatus, onPlanleggRenhold }: R
     setLagret(false)
 
     try {
-      await onEndreRengjøringsstatus(rom.id, nesteHandling.handling)
+      await onEndreRengjøringsstatus(rom.id, nesteHandling.handling, rom.versjon)
     } catch (feil) {
       setFeilmelding(
         feil instanceof Error
@@ -95,7 +96,7 @@ export function Romkort({ rom, onEndreRengjøringsstatus, onPlanleggRenhold }: R
       await onPlanleggRenhold(rom.id, {
         ansvarligRenholder: String(data.get('ansvarligRenholder') ?? ''),
         prioritet: data.get('prioritet') === 'Haster' ? 'Haster' : 'Normal',
-      })
+      }, rom.versjon)
       setLagret(true)
     } catch (feil) {
       setFeilmelding(feil instanceof Error ? feil.message : 'Renholdet kunne ikke planlegges.')
@@ -135,7 +136,7 @@ export function Romkort({ rom, onEndreRengjøringsstatus, onPlanleggRenhold }: R
 
       {onPlanleggRenhold && rom.rengjøringsstatus !== 'Ren' && (
         <form className="renholdsplan" onSubmit={(hendelse) => void lagrePlan(hendelse)}
-          key={`${rom.ansvarligRenholder}-${rom.renholdsprioritet}`}
+          key={rom.versjon}
           onChange={() => setLagret(false)}>
           <fieldset disabled={utførerHandling}>
             <legend>Planlegg renhold for rom {rom.nummer}</legend>

@@ -11,6 +11,7 @@ internal sealed class RomKonfigurasjon : IEntityTypeConfiguration<Rom>
         rom.ToTable("Rom");
         rom.HasKey(r => r.Id);
         rom.Property(r => r.Id).ValueGeneratedNever();
+        rom.Property(r => r.Versjon).IsConcurrencyToken().ValueGeneratedNever();
         rom.Property(r => r.Nummer).IsRequired();
         rom.HasIndex(r => r.Nummer).IsUnique();
 

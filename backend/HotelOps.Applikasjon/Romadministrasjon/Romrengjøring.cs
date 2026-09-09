@@ -4,27 +4,31 @@ namespace HotelOps.Applikasjon.Romadministrasjon;
 
 public sealed class Romrengjøring(IRomskriver romskriver)
 {
-    public Task<RomDto?> PlanleggAsync(Guid romId, string? ansvarligRenholder,
+    public Task<RomDto?> PlanleggAsync(Guid romId, Guid forventetVersjon, string? ansvarligRenholder,
         Renholdsprioritet prioritet, CancellationToken avbryt = default) =>
-        EndreStatusAsync(romId, rom => rom.PlanleggRenhold(ansvarligRenholder, prioritet), avbryt);
+        EndreStatusAsync(romId, forventetVersjon, rom => rom.PlanleggRenhold(ansvarligRenholder, prioritet), avbryt);
 
     public Task<RomDto?> MarkerSomSkittenAsync(
         Guid romId,
+        Guid forventetVersjon,
         CancellationToken avbryt = default) =>
-        EndreStatusAsync(romId, rom => rom.MarkerSomSkitten(), avbryt);
+        EndreStatusAsync(romId, forventetVersjon, rom => rom.MarkerSomSkitten(), avbryt);
 
     public Task<RomDto?> StartAsync(
         Guid romId,
+        Guid forventetVersjon,
         CancellationToken avbryt = default) =>
-        EndreStatusAsync(romId, rom => rom.StartRengjøring(), avbryt);
+        EndreStatusAsync(romId, forventetVersjon, rom => rom.StartRengjøring(), avbryt);
 
     public Task<RomDto?> FullførAsync(
         Guid romId,
+        Guid forventetVersjon,
         CancellationToken avbryt = default) =>
-        EndreStatusAsync(romId, rom => rom.FullførRengjøring(), avbryt);
+        EndreStatusAsync(romId, forventetVersjon, rom => rom.FullførRengjøring(), avbryt);
 
     private async Task<RomDto?> EndreStatusAsync(
         Guid romId,
+        Guid forventetVersjon,
         Action<Rom> endreStatus,
         CancellationToken avbryt)
     {
@@ -34,6 +38,9 @@ public sealed class Romrengjøring(IRomskriver romskriver)
         {
             return null;
         }
+
+        if (rom.Versjon != forventetVersjon)
+            throw new UtdatertRomversjonException();
 
         endreStatus(rom);
         await romskriver.LagreEndringerAsync(avbryt);

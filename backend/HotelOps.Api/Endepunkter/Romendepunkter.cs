@@ -60,46 +60,49 @@ public static class Romendepunkter
 
         ruter.MapPatch(
             "/api/rom/{romId:guid}/rengjoring/marker-skitten",
-            async (Guid romId, Romrengjøring romrengjøring, CancellationToken avbryt) =>
+            async (Guid romId, Romrengjøring romrengjøring, HttpRequest forespørselHttp, CancellationToken avbryt) =>
                 await UtførRengjøringsendringAsync(
-                    romId,
-                    () => romrengjøring.MarkerSomSkittenAsync(romId, avbryt)))
+                    romId, forespørselHttp,
+                    versjon => romrengjøring.MarkerSomSkittenAsync(romId, versjon, avbryt)))
             .WithName("MarkerRomSomSkittent")
             .WithTags("Rom")
             .Produces<RomDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         ruter.MapPatch(
             "/api/rom/{romId:guid}/rengjoring/start",
-            async (Guid romId, Romrengjøring romrengjøring, CancellationToken avbryt) =>
+            async (Guid romId, Romrengjøring romrengjøring, HttpRequest forespørselHttp, CancellationToken avbryt) =>
                 await UtførRengjøringsendringAsync(
-                    romId,
-                    () => romrengjøring.StartAsync(romId, avbryt)))
+                    romId, forespørselHttp,
+                    versjon => romrengjøring.StartAsync(romId, versjon, avbryt)))
             .WithName("StartRengjøringAvRom")
             .WithTags("Rom")
             .Produces<RomDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         ruter.MapPatch(
             "/api/rom/{romId:guid}/rengjoring/fullfor",
-            async (Guid romId, Romrengjøring romrengjøring, CancellationToken avbryt) =>
+            async (Guid romId, Romrengjøring romrengjøring, HttpRequest forespørselHttp, CancellationToken avbryt) =>
                 await UtførRengjøringsendringAsync(
-                    romId,
-                    () => romrengjøring.FullførAsync(romId, avbryt)))
+                    romId, forespørselHttp,
+                    versjon => romrengjøring.FullførAsync(romId, versjon, avbryt)))
             .WithName("FullførRengjøringAvRom")
             .WithTags("Rom")
             .Produces<RomDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         ruter.MapPatch("/api/rom/{romId:guid}/rengjoring/planlegg", async (
             Guid romId, PlanleggRenholdForespørsel forespørsel,
-            Romrengjøring romrengjøring, CancellationToken avbryt) =>
+            Romrengjøring romrengjøring, HttpRequest forespørselHttp, CancellationToken avbryt) =>
         {
             var feil = new Dictionary<string, string[]>();
             if (forespørsel.Prioritet is not ("Normal" or "Haster"))
@@ -110,8 +113,8 @@ public static class Romendepunkter
                 return Results.ValidationProblem(feil, title: "Renholdet kunne ikke planlegges.");
 
             var prioritet = Enum.Parse<Renholdsprioritet>(forespørsel.Prioritet!);
-            return await UtførRengjøringsendringAsync(romId,
-                () => romrengjøring.PlanleggAsync(romId, forespørsel.AnsvarligRenholder, prioritet, avbryt));
+            return await UtførRengjøringsendringAsync(romId, forespørselHttp,
+                versjon => romrengjøring.PlanleggAsync(romId, versjon, forespørsel.AnsvarligRenholder, prioritet, avbryt));
         })
         .WithName("PlanleggRenhold")
         .WithTags("Rom")
@@ -126,11 +129,17 @@ public static class Romendepunkter
 
     private static async Task<IResult> UtførRengjøringsendringAsync(
         Guid romId,
-        Func<Task<RomDto?>> handling)
+        HttpRequest forespørselHttp,
+        Func<Guid, Task<RomDto?>> handling)
     {
+        if (!Guid.TryParseExact(forespørselHttp.Headers["X-Rom-Versjon"].ToString(), "D", out var versjon))
+            return Results.Problem(statusCode: StatusCodes.Status400BadRequest,
+                title: "Romversjon må oppgis.",
+                detail: "Send rommets versjon fra oversikten i headeren X-Rom-Versjon.");
+
         try
         {
-            var rom = await handling();
+            var rom = await handling(versjon);
 
             return rom is null
                 ? Results.Problem(
@@ -138,6 +147,11 @@ public static class Romendepunkter
                     title: "Rommet finnes ikke.",
                     detail: $"Fant ikke rom med ID {romId}.")
                 : Results.Ok(rom);
+        }
+        catch (UtdatertRomversjonException feil)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status409Conflict,
+                title: "Romvisningen er utdatert.", detail: feil.Message);
         }
         catch (RomkonfliktException feil)
         {

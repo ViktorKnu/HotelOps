@@ -1,4 +1,7 @@
 @HotelOps.Api_HostAddress = http://localhost:5091
+# Kopier versjon fra siste GET/vellykkede PATCH for valgt rom før hver endring.
+X-Rom-Versjon: {{RomVersjon}}
+@RomVersjon = 00000000-0000-0000-0000-000000000000
 @RomId = 00000000-0000-0000-0000-000000000000
 
 GET {{HotelOps.Api_HostAddress}}/api/helse
@@ -22,19 +25,23 @@ Content-Type: application/json
 ###
 
 PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/marker-skitten
+X-Rom-Versjon: {{RomVersjon}}
 
 ###
 
 PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/start
+X-Rom-Versjon: {{RomVersjon}}
 
 ###
 
 PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/fullfor
+X-Rom-Versjon: {{RomVersjon}}
 
 ###
 
 # Bruk et rom som er skittent eller under rengjøring.
 PATCH {{HotelOps.Api_HostAddress}}/api/rom/{{RomId}}/rengjoring/planlegg
+X-Rom-Versjon: {{RomVersjon}}
 Content-Type: application/json
 
 {

@@ -13,6 +13,78 @@ namespace HotelOps.ApiTester;
 
 public sealed class RomendepunktTester
 {
+    private static void SettRomversjon(HttpClient klient, Guid versjon)
+    {
+        klient.DefaultRequestHeaders.Remove("X-Rom-Versjon");
+        klient.DefaultRequestHeaders.Add("X-Rom-Versjon", versjon.ToString());
+    }
+
+    [Theory]
+    [InlineData("marker-skitten", Rengjøringsstatus.Ren)]
+    [InlineData("start", Rengjøringsstatus.Skitten)]
+    [InlineData("fullfor", Rengjøringsstatus.UnderRengjøring)]
+    [InlineData("planlegg", Rengjøringsstatus.Skitten)]
+    public async Task GammelVersjonAvvisesFørRommetEndres(string handling, Rengjøringsstatus status)
+    {
+        var rom = new Rom("101", 1, rengjøringsstatus: status);
+        var versjon = rom.Versjon;
+        var skriver = new TestRomskriver(rom: rom);
+        await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
+        using var klient = fabrikk.CreateClient();
+        SettRomversjon(klient, Guid.NewGuid());
+        using var innhold = handling == "planlegg"
+            ? JsonContent.Create(new { ansvarligRenholder = "Kari", prioritet = "Haster" }) : null;
+        using var svar = await klient.PatchAsync($"/api/rom/{rom.Id}/rengjoring/{handling}", innhold);
+        Assert.Equal(HttpStatusCode.Conflict, svar.StatusCode);
+        Assert.Equal(status, rom.Rengjøringsstatus);
+        Assert.Null(rom.AnsvarligRenholder);
+        Assert.Equal(versjon, rom.Versjon);
+        Assert.Equal(0, skriver.AntallLagringer);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("ugyldig")]
+    public async Task ManglendeEllerUgyldigVersjonGir400(string? versjon)
+    {
+        var rom = new Rom("101", 1);
+        var skriver = new TestRomskriver(rom: rom);
+        await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
+        using var klient = fabrikk.CreateClient();
+        if (versjon is not null) klient.DefaultRequestHeaders.Add("X-Rom-Versjon", versjon);
+        using var svar = await klient.PatchAsync($"/api/rom/{rom.Id}/rengjoring/marker-skitten", null);
+        Assert.Equal(HttpStatusCode.BadRequest, svar.StatusCode);
+        Assert.Equal(0, skriver.AntallLagringer);
+        Assert.Equal(Rengjøringsstatus.Ren, rom.Rengjøringsstatus);
+    }
+
+    [Fact]
+    public async Task NyVersjonFraSvarKrevesForNesteEndring()
+    {
+        var rom = new Rom("101", 1, rengjøringsstatus: Rengjøringsstatus.Skitten);
+        var skriver = new TestRomskriver(rom: rom);
+        await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
+        using var klient = fabrikk.CreateClient();
+        using var oversikt = JsonDocument.Parse(await klient.GetStringAsync("/api/rom"));
+        var gammelVersjon = oversikt.RootElement[0].GetProperty("versjon").GetGuid();
+        SettRomversjon(klient, gammelVersjon);
+        using var førsteSvar = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
+            new { ansvarligRenholder = "Kari", prioritet = "Haster" });
+        Assert.Equal(HttpStatusCode.OK, førsteSvar.StatusCode);
+        using var oppdatert = JsonDocument.Parse(await førsteSvar.Content.ReadAsStringAsync());
+        var nyVersjon = oppdatert.RootElement.GetProperty("versjon").GetGuid();
+        Assert.NotEqual(gammelVersjon, nyVersjon);
+        using var gammeltSvar = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
+            new { ansvarligRenholder = "Ola", prioritet = "Normal" });
+        Assert.Equal(HttpStatusCode.Conflict, gammeltSvar.StatusCode);
+        Assert.Equal("Kari", rom.AnsvarligRenholder);
+        Assert.Equal(1, skriver.AntallLagringer);
+        SettRomversjon(klient, nyVersjon);
+        using var nyttSvar = await klient.PatchAsync($"/api/rom/{rom.Id}/rengjoring/start", null);
+        Assert.Equal(HttpStatusCode.OK, nyttSvar.StatusCode);
+        Assert.Equal(2, skriver.AntallLagringer);
+    }
+
     [Theory]
     [InlineData("marker-skitten", Rengjøringsstatus.Ren)]
     [InlineData("start", Rengjøringsstatus.Skitten)]
@@ -26,6 +98,7 @@ public sealed class RomendepunktTester
         using var klient = fabrikk.CreateClient();
         using var innhold = handling == "planlegg"
             ? JsonContent.Create(new { ansvarligRenholder = "Kari", prioritet = "Haster" }) : null;
+        SettRomversjon(klient, rom.Versjon);
         using var svar = await klient.PatchAsync($"/api/rom/{rom.Id}/rengjoring/{handling}", innhold);
         Assert.Equal(HttpStatusCode.Conflict, svar.StatusCode);
         Assert.Equal("application/problem+json", svar.Content.Headers.ContentType?.MediaType);
@@ -43,6 +116,7 @@ public sealed class RomendepunktTester
         var skriver = new TestRomskriver(rom: rom);
         await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
         using var klient = fabrikk.CreateClient();
+        SettRomversjon(klient, rom.Versjon);
         using var svar = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
             new { ansvarligRenholder = " Kari ", prioritet = "Haster" });
         Assert.Equal(HttpStatusCode.OK, svar.StatusCode);
@@ -65,6 +139,7 @@ public sealed class RomendepunktTester
         var skriver = new TestRomskriver(rom: rom);
         await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
         using var klient = fabrikk.CreateClient();
+        SettRomversjon(klient, rom.Versjon);
         using var svar = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
             new { ansvarligRenholder = "Kari", prioritet });
         Assert.Equal(HttpStatusCode.BadRequest, svar.StatusCode);
@@ -78,12 +153,15 @@ public sealed class RomendepunktTester
         var skriver = new TestRomskriver(rom: rom);
         await using var fabrikk = new RomApiFabrikk(new TestRomleser([rom]), romskriver: skriver);
         using var klient = fabrikk.CreateClient();
+        SettRomversjon(klient, rom.Versjon);
         using var langtNavn = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
             new { ansvarligRenholder = new string('a', 101), prioritet = "Normal" });
         Assert.Equal(HttpStatusCode.BadRequest, langtNavn.StatusCode);
+        SettRomversjon(klient, rom.Versjon);
         using var rentRom = await klient.PatchAsJsonAsync($"/api/rom/{rom.Id}/rengjoring/planlegg",
             new { ansvarligRenholder = "Kari", prioritet = "Normal" });
         Assert.Equal(HttpStatusCode.Conflict, rentRom.StatusCode);
+        SettRomversjon(klient, rom.Versjon);
         using var ukjent = await klient.PatchAsJsonAsync($"/api/rom/{Guid.NewGuid()}/rengjoring/planlegg",
             new { ansvarligRenholder = "Kari", prioritet = "Normal" });
         Assert.Equal(HttpStatusCode.NotFound, ukjent.StatusCode);
@@ -211,6 +289,7 @@ public sealed class RomendepunktTester
             romskriver: romskriver);
         using var klient = fabrikk.CreateClient();
 
+        SettRomversjon(klient, rom.Versjon);
         using var skittenSvar = await klient.PatchAsync(
             $"/api/rom/{rom.Id}/rengjoring/marker-skitten",
             null);
@@ -218,6 +297,7 @@ public sealed class RomendepunktTester
         Assert.Equal(Rengjøringsstatus.Skitten, rom.Rengjøringsstatus);
         await KontrollerRengjøringsstatusAsync(skittenSvar, "Skitten", erKlart: false);
 
+        SettRomversjon(klient, rom.Versjon);
         using var startetSvar = await klient.PatchAsync(
             $"/api/rom/{rom.Id}/rengjoring/start",
             null);
@@ -225,6 +305,7 @@ public sealed class RomendepunktTester
         Assert.Equal(Rengjøringsstatus.UnderRengjøring, rom.Rengjøringsstatus);
         await KontrollerRengjøringsstatusAsync(startetSvar, "UnderRengjøring", erKlart: false);
 
+        SettRomversjon(klient, rom.Versjon);
         using var fullførtSvar = await klient.PatchAsync(
             $"/api/rom/{rom.Id}/rengjoring/fullfor",
             null);
@@ -245,6 +326,7 @@ public sealed class RomendepunktTester
             romskriver: romskriver);
         using var klient = fabrikk.CreateClient();
 
+        SettRomversjon(klient, rom.Versjon);
         using var svar = await klient.PatchAsync(
             $"/api/rom/{rom.Id}/rengjoring/start",
             null);
@@ -268,6 +350,7 @@ public sealed class RomendepunktTester
         using var klient = fabrikk.CreateClient();
         var ukjentRomId = Guid.NewGuid();
 
+        SettRomversjon(klient, Guid.NewGuid());
         using var svar = await klient.PatchAsync(
             $"/api/rom/{ukjentRomId}/rengjoring/marker-skitten",
             null);

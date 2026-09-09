@@ -83,11 +83,12 @@ export async function opprettRom(forespørsel: OpprettRomForespørsel): Promise<
 export async function endreRengjøringsstatus(
   romId: string,
   handling: Rengjøringshandling,
+  versjon: string,
 ): Promise<Rom> {
   try {
     const svar = await fetch(`/api/rom/${romId}/rengjoring/${handling}`, {
       method: 'PATCH',
-      headers: { Accept: 'application/json' },
+      headers: { Accept: 'application/json', 'X-Rom-Versjon': versjon },
     })
 
     if (!svar.ok) {
@@ -113,11 +114,11 @@ export interface Renholdsplan {
   prioritet: Rom['renholdsprioritet']
 }
 
-export async function planleggRenhold(romId: string, plan: Renholdsplan): Promise<Rom> {
+export async function planleggRenhold(romId: string, plan: Renholdsplan, versjon: string): Promise<Rom> {
   try {
     const svar = await fetch(`/api/rom/${romId}/rengjoring/planlegg`, {
       method: 'PATCH',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-Rom-Versjon': versjon },
       body: JSON.stringify(plan),
     })
     if (!svar.ok) {

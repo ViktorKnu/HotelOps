@@ -457,6 +457,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--grønn-700); ou
 .renholdshode h2 { margin: 0; color: var(--grønn-900); }
 .renholdshode p { margin: 0.5rem 0 0; color: var(--dempet); line-height: 1.5; }
 .renholdshode .skjemafelt { min-width: 160px; }
+.renholdsfiltre { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: 1rem; margin-top: 1.5rem; }
 .renholdsoppsummering { color: var(--dempet); font-size: 0.85rem; margin: 1.25rem 0; }
 .renholdstavle { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
 .renholdskolonne { padding: 1rem; border: 1px solid var(--kant); border-radius: 16px; background: #edf1ed; }
@@ -471,6 +472,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--grønn-700); ou
 }
 
 @media (max-width: 900px) {
+  .renholdsfiltre { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .romfiltre { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .registreringspanel { grid-template-columns: 1fr; }
   .nøkkeltall { grid-template-columns: repeat(2, 1fr); }
@@ -478,6 +480,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--grønn-700); ou
 }
 
 @media (max-width: 620px) {
+  .renholdsfiltre { grid-template-columns: 1fr; }
   .renholdstavle { grid-template-columns: 1fr; }
   .renholdshode { display: grid; }
   .renholdskolonne { padding: 0.75rem; }

@@ -35,6 +35,13 @@ hvert rom via tavlen. Ansvarlig er et fritt navnefelt, ikke en kobling til et
 ansattregister. Tavlen bruker eksisterende romstatus uten egne oppgaveposter
 eller historikk. Tildeling og prioritet nullstilles når rengjøringen fullføres.
 
+Renholdstavlen kan også filtreres på ansvarlig renholder, «Ikke tildelt» og
+prioritet. Filtrene kombineres med etasje og kan nullstilles samlet.
+Treffantall og kolonner gjelder utvalget; nøkkeltallene øverst gjelder hele
+hotellet. Et valgt navn beholdes i filteret når siste rom fullføres eller
+tildeles på nytt, slik at tavlen viser et tomt utvalg fremfor andre ansattes
+rom. Navnene hentes fra rommenes tildelinger, ikke fra et ansattregister.
+
 ## Teknologistack
 
 - ASP.NET Core Web API og C#
@@ -161,7 +168,8 @@ Eksempel på respons når et rom finnes:
     "driftsstatus": "Operativ",
     "erKlartForInnsjekking": true,
     "ansvarligRenholder": null,
-    "renholdsprioritet": "Normal"
+    "renholdsprioritet": "Normal",
+    "versjon": "29cc73b4-37a4-49a1-9087-f309cfed7c4f"
   }
 ]
 ```
@@ -242,15 +250,30 @@ annen forespørsel har endret disse i mellomtiden, avvises lagringen med
 `409 Conflict` og en melding om å oppdatere oversikten. Endringen forsøkes
 ikke automatisk på nytt. Knappen «Oppdater oversikten» henter siste romdata.
 
-Kontrollen gjelder overlappende API-forespørsler. En gammel nettleservisning
-oppdages ikke hvis den andre endringen allerede er lagret før API-et leser
-rommet. Dette krever senere versjonskontroll fra klienten. Oppdatering av
+Alle romsvar inneholder også `versjon`. Hver gyldige renholdsendring gir en
+ny versjon. Alle fire PATCH-endepunkter krever headeren `X-Rom-Versjon` med
+versjonen klienten hentet, som UUID med bindestreker uten anførselstegn:
+
+```http
+X-Rom-Versjon: 29cc73b4-37a4-49a1-9087-f309cfed7c4f
+```
+
+Manglende eller ugyldig versjon gir `400 Bad Request`. En utdatert versjon
+gir `409 Conflict` før rommet endres. Frontend sender versjonen automatisk
+og bruker ny versjon fra et vellykket svar. Dermed oppdages også endringer
+som var lagret før forespørselen startet. Oppdatering av
 oversikten lukker åpne renholdsplaner og forkaster ulagrede skjemaendringer.
 
 Migreringen `KontrollerSamtidigeRomendringer` registrerer endringen i
 EF-modellen uten å endre tabellkolonnene. Testene simulerer lagringskonflikt
 og kontrollerer HTTP-svar; samtidige transaksjoner mot PostgreSQL er ikke
 dekket av disse testene.
+
+Migreringen `LeggTilRomversjon` legger til versjonskolonnen og må kjøres før
+oppdatert API tas i bruk, med `dotnet ef database update`-kommandoen over.
+Eksisterende rom får null-UUID som startversjon og en ny UUID ved første
+endring. Oppdater også eventuelle API-klienter: PATCH uten versjonsheader
+godtas ikke lenger.
 
 ## Videre utvikling
 
